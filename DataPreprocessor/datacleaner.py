@@ -1,4 +1,5 @@
 from sklearn.preprocessing import Imputer
+import pandas as pd
 
 class Cleaner:
     # Class attributes
@@ -9,7 +10,7 @@ class Cleaner:
     def __init__(self, data=None):
         self.data = data
 
-    def clean(self, strategy='mean_col'):
+    def clean(self, strategy='mean_col', type='array'):
         self.strategy = strategy
 
         if strategy == 'mean_col':
@@ -20,4 +21,13 @@ class Cleaner:
             pass
 
         imputer.fit(self.data)
-        return imputer.transform(self.data.values)
+        data_array = imputer.transform(self.data)
+
+        count = 0
+
+        self.data = pd.DataFrame(data_array, columns=list(self.data))
+
+        if type == 'df':
+            return self.data
+        elif type == 'array':
+            return data_array
