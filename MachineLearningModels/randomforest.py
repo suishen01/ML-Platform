@@ -18,7 +18,7 @@ class RandomForest(Model):
             self.Y = Y
 
         self.model = RandomForestRegressor(n_estimators=n_estimators)
-            
+
 
     def fit(self, X=None, Y=None):
         if X is not None:
@@ -44,12 +44,12 @@ class RandomForest(Model):
             X_headers = list(self.X)
 
         # Get numerical feature importances
-        importances = list(self.model.feature_importances_)
+        #importances = list(self.model.feature_importances_)
         # List of tuples with variable and importance
-        feature_importances = [(feature, round(importance, 2)) for feature, importance in zip(X_headers, importances)]
+        #feature_importances = [(feature, round(importance, 2)) for feature, importance in zip(X_headers, importances)]
         # Sort the feature importances by most important first
-        feature_importances = sorted(feature_importances, key = lambda x: x[1], reverse = True)
+        #feature_importances = sorted(self.model.feature_importances_, key = lambda x: x[1], reverse = True)
         # Print out the feature and importances
-        [print('Variable: {:20} Importance: {}'.format(*pair)) for pair in feature_importances];
+        #[print('Variable: {:20} Importance: {}'.format(*pair)) for pair in feature_importances];
 
-        return feature_importances
+        return self.model.feature_importances_
