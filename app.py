@@ -43,7 +43,19 @@ def display_graphs(selected_values):
                             'size': 1,
                             'line': {'width': 0.5, 'color': 'white'}
                         },
-                        name='12994'
+                        name=selected_values
+                    ),
+                    go.Scatter(
+                        x=df['date'],
+                        y=df[df['gvkey'].astype('str') == selected_values]['predicted_ret'],
+                        text=df[df['gvkey'].astype('str') == selected_values]['gvkey'],
+                        mode='lines+markers',
+                        opacity=0.7,
+                        marker={
+                            'size': 1,
+                            'line': {'width': 0.5, 'color': 'white'}
+                        },
+                        name=selected_values + '(predicted)'
                     )
                 ],
                 'layout': go.Layout(
