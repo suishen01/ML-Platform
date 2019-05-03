@@ -19,6 +19,8 @@ class SQL:
         else:
             if condition == 'equal':
                 return self.data[self.data[index] == where]
+            elif condition == 'greater':
+                return self.data[self.data[index] > where]
 
     def head(self, head):
         return self.data.head(head)
