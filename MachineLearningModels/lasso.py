@@ -1,4 +1,3 @@
-from sklearn.ensemble import AdaBoostRegressor
 from MachineLearningModels.model import Model
 from sklearn.linear_model import Lasso as LassoRegression
 
