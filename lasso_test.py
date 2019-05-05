@@ -31,10 +31,9 @@ print('Training Labels Shape:', train_labels.shape)
 print('Testing Features Shape:', test_features.shape)
 print('Testing Labels Shape:', test_labels.shape)
 
-alpha = 0.1
+alpha = 0.001
 lasso = Lasso()
 
 lasso.fit(train_features, train_labels)
 y_pred_lasso = lasso.predict(test_features)
-r2_score_lasso = r2_score(test_labels, y_pred_lasso)
-print("r^2 on test data : %f" % r2_score_lasso)
+lasso.featureImportance()

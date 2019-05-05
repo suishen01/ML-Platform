@@ -33,5 +33,4 @@ ridge = Ridge()
 
 ridge.fit(train_features, train_labels)
 y_pred_ridge = ridge.predict(test_features)
-r2_score_ridge = r2_score(test_labels, y_pred_ridge)
-print("r^2 on test data : %f" % r2_score_ridge)
+ridge.featureImportance()

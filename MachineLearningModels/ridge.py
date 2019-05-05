@@ -1,7 +1,7 @@
 from MachineLearningModels.model import Model
-from sklearn.linear_model import Lasso as LassoRegression
+from sklearn.linear_model import Ridge as RidgeRegression
 
-class Lasso(Model):
+class Ridge(Model):
 
     # X represents the features, Y represents the labels
     X = None
@@ -18,7 +18,7 @@ class Lasso(Model):
         if Y is not None:
             self.Y = Y
 
-        self.model = LassoRegression(alpha=alpha)
+        self.model = RidgeRegression(alpha=alpha)
 
 
     def fit(self, X=None, Y=None):
@@ -28,9 +28,9 @@ class Lasso(Model):
         if Y is not None:
             self.Y = Y
 
-        print('Lasso Regression Train started............')
+        print('Ridge Regression Train started............')
         self.model.fit(self.X, self.Y)
-        print('Lasso Regression completed..........')
+        print('Ridge Regression completed..........')
 
         return self.model
 
@@ -42,14 +42,13 @@ class Lasso(Model):
 
 
     def save(self):
-        print('No models will be saved for lasso')
+        print('No models will be saved for ridge')
 
     def featureImportance(self, X_headers=None):
         if X_headers is None:
             X_headers = list(self.X)
 
 
-        feature_importance_ = zip(self.model.coef_, X_headers)
+        feature_importance_ = zip(self.model.coef_[0], X_headers)
         feature_importance = set(feature_importance_)
-
         return feature_importance
