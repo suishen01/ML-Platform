@@ -1,5 +1,9 @@
 import numpy as np
-from sklearn.metrics import r2_score
+from sklearn.metrics import r2_score, mean_squared_error
+from sklearn.metrics import mean_squared_error
+from math import sqrt
+
+
 
 class Evaluation:
 
@@ -26,3 +30,18 @@ class Evaluation:
         print('R2 score: ', r2s)
 
         return r2s
+
+    def getMSE(self):
+        errors = mean_squared_error(self.test_labels, self.evaluation)
+        print('Mean Square Error:', errors)
+        return errors
+
+    def getMAPE(self):
+        errors = np.mean(np.abs((self.test_labels - self.evaluation) / self.test_labels)) * 100
+        print('Mean Absolute Percentage Error:', errors)
+        return errors
+
+    def getRMSE(self):
+        errors = sqrt(mean_squared_error(self.test_labels, self.evaluation))
+        print('Root Mean Square Errors:', errors)
+        return errors
