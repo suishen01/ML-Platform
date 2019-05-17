@@ -10,10 +10,15 @@ from DataPreprocessor.dataspliter import Spliter
 from Evaluation.evaluation import Evaluation
 
 csvreader = CsvReader()
-data = csvreader.read('data_small_withLaggedOutputs.csv')
+data = csvreader.read('CRSPMF_MFFFactors_FundSumM_Sample.csv')
 
-labels = data[['ret']].copy()
-features = data[['dp','epm','bmm','ntis','tbl','tms','dfy','svar','bm','ep','maxret','absacc','acc','aeavol','age','agr','baspread','beta','betasq','bm_ia','cash','cashdebt','cashpr','cfp','cfp_ia','chatoia','chcsho','chempia','chinv','chmom','chpmia','chtx','cinvest','convind','currat','depr','divi','divo','dolvol','dy','ear','egr','gma','grCAPX','grltnoa','herf','hire','idiovol','ill','indmom','invest','lev','lgr','mom12m','mom1m','mom36m','mom6m','ms','mvel1','mve_ia','nincr','operprof','orgcap','pchcapx_ia','pchcurrat','pchdepr','pchgm_pchsale','pchsale_pchxsga','pchsaleinv','pctacc','pricedelay','ps','quick','rd','rd_mve','rd_sale','realestate','retvol','roaq','roavol','roeq','roic','rsup','salecash','saleinv','salerec','secured','securedind','sgr','sin','sp','std_dolvol','std_turn','stdacc','stdcf','tang','tb','turn','zerotrade','ret_lagged','retrf_lagged','maxret_lagged']].copy()
+#data = data[data.gvkey != 12994]
+
+labels = data[['mret', 'Wmret', 'MFExRet', 'DollarFRet', 'DollarFWmRet']].copy()
+labels = labels.drop(labels.index[[labels.shape[0]-1]])
+features = data[['LogFunadAge','LogFundSize','retailFDummy','InstiFDummy','WFunddiv_ytd','WFundper_cash','WFundper_oth','WFundper_pref','WFundnav_52w_h','WFundnav_52w_l_dt','WFundper_com']].copy()
+features = features.drop(features.index[[1]])
+feature_list = ['LogFunadAge','LogFundSize','retailFDummy','InstiFDummy','WFunddiv_ytd','WFundper_cash','WFundper_oth','WFundper_pref','WFundnav_52w_h','WFundnav_52w_l_dt','WFundper_com']
 
 cleaner1 = Cleaner(labels)
 cleaner2 = Cleaner(features)
@@ -35,5 +40,7 @@ alpha = 0.001
 lasso = Lasso()
 
 lasso.fit(train_features, train_labels)
-y_pred_lasso = lasso.predict(test_features)
-lasso.featureImportance()
+predictions = lasso.predict(test_features)
+predict = Evaluation(evaluation=predictions, test_labels=test_labels)
+r2s = predict.getRSquare(output='multiple')
+print('R2 score: ', r2s)

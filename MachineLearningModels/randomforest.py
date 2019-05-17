@@ -17,7 +17,7 @@ class RandomForest(Model):
         if Y is not None:
             self.Y = Y
 
-        self.model = RandomForestRegressor(n_estimators=n_estimators)
+        self.model = RandomForestRegressor(n_estimators=n_estimators, verbose=1)
 
 
     def fit(self, X=None, Y=None):

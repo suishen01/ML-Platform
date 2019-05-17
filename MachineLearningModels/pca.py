@@ -32,10 +32,10 @@ class PCA(Model):
             self.Y = Y
 
         print('PCA Train started............')
-        self.model.fit(self.X, self.Y)
+        data = self.model.fit(self.X)
         print('PCA completed..........')
 
-        return self.model
+        return data
 
     def fit_transform(self, X=None, Y=None):
         if X is not None:
@@ -45,10 +45,10 @@ class PCA(Model):
             self.Y = Y
 
         print('PCA Train/Transform started............')
-        self.model.fit_transform(self.X, self.Y)
+        data = self.model.fit_transform(self.X)
         print('PCA completed..........')
 
-        return self.model
+        return data
 
     def save(self):
         print('No models will be saved for PCA')
