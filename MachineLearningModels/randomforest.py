@@ -1,4 +1,5 @@
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier
 from MachineLearningModels.model import Model
 
 class RandomForest(Model):
@@ -10,15 +11,17 @@ class RandomForest(Model):
     model = None
 
 
-    def __init__(self, X=None, Y=None,  n_estimators=100):
+    def __init__(self, X=None, Y=None,  n_estimators=100, type='regressor'):
         if X is not None:
             self.X = X
 
         if Y is not None:
             self.Y = Y
 
-        self.model = RandomForestRegressor(n_estimators=n_estimators, verbose=1)
-
+        if (type == 'regressor'):
+            self.model = RandomForestRegressor(n_estimators=n_estimators, verbose=1)
+        else:
+            self.model = RandomForestClassifier(n_estimators=n_estimators, verbose=1)
 
     def fit(self, X=None, Y=None):
         if X is not None:

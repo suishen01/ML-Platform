@@ -7,6 +7,7 @@ from MachineLearningModels.model import Model
 from sklearn.model_selection import cross_val_score
 from tensorflow.python.keras.models import load_model
 from sklearn.metrics import r2_score
+import os
 
 
 class NeuralNetwork(Model):
@@ -28,8 +29,11 @@ class NeuralNetwork(Model):
 
         self.model = Sequential()
 
-    def add(self, layer, input_dim=None, kernel_initializer=None, activation=None):
-        self.model.add(Dense(layer, input_dim=input_dim, kernel_initializer=kernel_initializer, activation=activation))
+    def add(self, layer, input_dim=None, kernel_initializer=None, activation='linear'):
+        if (kernel_initializer == None and input_dim == None):
+            self.model.add(Dense(layer, activation=activation))
+        else:
+            self.model.add(Dense(layer, input_dim=input_dim, kernel_initializer=kernel_initializer, activation=activation))
 
     def summary(self):
         self.model.summary()

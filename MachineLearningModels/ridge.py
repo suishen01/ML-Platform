@@ -1,5 +1,6 @@
 from MachineLearningModels.model import Model
 from sklearn.linear_model import Ridge as RidgeRegression
+from sklearn.linear_model import RidgeClassifier
 
 class Ridge(Model):
 
@@ -10,7 +11,7 @@ class Ridge(Model):
     model = None
 
 
-    def __init__(self, X=None, Y=None,  alpha=1):
+    def __init__(self, X=None, Y=None,  alpha=1, type='regressor'):
 
         if X is not None:
             self.X = X
@@ -18,7 +19,11 @@ class Ridge(Model):
         if Y is not None:
             self.Y = Y
 
-        self.model = RidgeRegression(alpha=alpha)
+        if type == 'regressor':
+            self.model = RidgeRegression(alpha=alpha)
+        else:
+            self.model = RidgeClassifier(alpha=alpha)
+
 
 
     def fit(self, X=None, Y=None):
@@ -51,4 +56,4 @@ class Ridge(Model):
 
         feature_importance_ = zip(self.model.coef_[0], X_headers)
         feature_importance = set(feature_importance_)
-        return feature_importance
+        return self.model.coef_[0]

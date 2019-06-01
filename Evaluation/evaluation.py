@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.metrics import mean_squared_error
 from math import sqrt
-
+from sklearn.metrics import accuracy_score
 
 
 class Evaluation:
@@ -19,13 +19,15 @@ class Evaluation:
         # Calculate the absolute errors
         errors = abs(self.evaluation - self.test_labels)
         # Print out the mean absolute error (mae)
-        print('Mean Absolute Error:', round(np.mean(errors), 2),'degrees.')
 
         return errors
 
     def getRSquare(self, output='single'):
         if output == 'multiple':
             r2s = r2_score(self.test_labels, self.evaluation, multioutput='variance_weighted')
+        else:
+            r2s = r2_score(self.test_labels, self.evaluation)
+
 
         print('R2 score: ', r2s)
 
@@ -44,4 +46,9 @@ class Evaluation:
     def getRMSE(self):
         errors = sqrt(mean_squared_error(self.test_labels, self.evaluation))
         print('Root Mean Square Errors:', errors)
+        return errors
+
+    def getAccuracy(self):
+        errors = accuracy_score(self.test_labels, self.evaluation)
+        print('Accuracy:', errors)
         return errors
