@@ -44,9 +44,7 @@ class AdaBoost(Model):
         print('Prediction completed..........')
         return self.predictions
 
-    def featureImportance(self, X_headers=None):
-        if X_headers is None:
-            X_headers = list(self.X)
+    def featureImportance(self):
 
         # Get numerical feature importances
         # importances = list(self.model.feature_importances_)

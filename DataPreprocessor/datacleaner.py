@@ -1,5 +1,7 @@
 from sklearn.preprocessing import Imputer
 import pandas as pd
+import numpy as np
+
 
 class Cleaner:
     # Class attributes
@@ -17,8 +19,10 @@ class Cleaner:
             imputer = Imputer(missing_values='NaN', strategy='mean', axis=0)
         elif strategy == 'mean_row':
             imputer = Imputer(missing_values='NaN', strategy='mean', axis=1)
-        else:
-            pass
+        elif strategy == 'most_frequent':
+            imputer = Imputer(missing_values='NaN', strategy='most_frequent', axis=1)
+        elif strategy == 'ignore':
+            return self.data.replace(to_replace='NaN', value=np.nan).dropna()
 
         imputer.fit(self.data)
         data_array = imputer.transform(self.data)

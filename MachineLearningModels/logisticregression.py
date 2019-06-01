@@ -44,11 +44,11 @@ class LogisticRegression(Model):
     def save(self):
         print('No models will be saved for Logistic Regression')
 
-    def featureImportance(self, X_headers=None):
-        if X_headers is None:
-            X_headers = list(self.X)
-        print(self.model.coef_)
-        feature_importance_ = zip(self.model.coef_[0], X_headers)
-        feature_importance = set(feature_importance_)
+    def featureImportance(self):
+        #if X_headers is None:
+    #        X_headers = list(self.X)
+    #    print(self.model.coef_)
+    #    feature_importance_ = zip(self.model.coef_[0], X_headers)
+    #    feature_importance = set(feature_importance_)
 
-        return feature_importance
+        return self.model.coef_

@@ -53,12 +53,10 @@ class PCA(Model):
     def save(self):
         print('No models will be saved for PCA')
 
-    def featureImportance(self, X_headers=None):
-        if X_headers is None:
-            X_headers = list(self.X)
-
+    def featureImportance(self):
         index = []
-        for i in range(self.n_components):
-            index.append('PC-' + str(i))
-
-        return pd.DataFrame(self.model.components_,columns=X_headers,index = index)
+        #for i in range(self.n_components):
+        #    index.append('PC-' + str(i))
+        index.append('PC-' + str(0))
+        # return pd.DataFrame(self.model.components_[0].reshape((1,30)),columns=X_headers,index = index)
+        return self.model.components_[0]
