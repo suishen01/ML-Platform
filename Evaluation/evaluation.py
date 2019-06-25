@@ -7,48 +7,64 @@ from sklearn.metrics import accuracy_score
 
 class Evaluation:
 
+    output_dir = None
     evaluation = None
     test_labels = None
 
-    def __init__(self, evaluation, test_labels=None):
+    def __init__(self, evaluation, test_labels=None, output_dir='./results.txt'):
         self.evaluation = evaluation
         self.test_labels = test_labels
+        self.output_dir = output_dir
 
     def getAbsError(self):
 
         # Calculate the absolute errors
         errors = abs(self.evaluation - self.test_labels)
         # Print out the mean absolute error (mae)
-
+        text_file = open(self.output_dir, "a")
+        text_file.write("Absolute Error: %s" % str(errors))
+        text_file.close()
         return errors
 
     def getRSquare(self, output='single'):
         if output == 'multiple':
-            r2s = r2_score(self.test_labels, self.evaluation, multioutput='variance_weighted')
+            errors = r2_score(self.test_labels, self.evaluation, multioutput='variance_weighted')
         else:
-            r2s = r2_score(self.test_labels, self.evaluation)
+            errors = r2_score(self.test_labels, self.evaluation)
 
-
-        print('R2 score: ', r2s)
-
-        return r2s
+        text_file = open(self.output_dir, "a")
+        text_file.write("R Square Score: %s" % str(errors))
+        text_file.close()
+        return errors
 
     def getMSE(self):
         errors = mean_squared_error(self.test_labels, self.evaluation)
-        print('Mean Square Error:', errors)
+
+        text_file = open(self.output_dir, "a")
+        text_file.write("Mean Squared Error: %s" % str(errors))
+        text_file.close()
         return errors
 
     def getMAPE(self):
         errors = np.mean(np.abs((self.test_labels - self.evaluation) / self.test_labels)) * 100
-        print('Mean Absolute Percentage Error:', errors)
+
+        text_file = open(self.output_dir, "a")
+        text_file.write("Mean Absolute Percenatge Error: %s" % str(errors))
+        text_file.close()
+
         return errors
 
     def getRMSE(self):
         errors = sqrt(mean_squared_error(self.test_labels, self.evaluation))
-        print('Root Mean Square Errors:', errors)
+
+        text_file = open(self.output_dir, "a")
+        text_file.write("Squared Mean Squared Error: %s" % str(errors))
+        text_file.close()
         return errors
 
     def getAccuracy(self):
         errors = accuracy_score(self.test_labels, self.evaluation)
-        print('Accuracy:', errors)
+        text_file = open(self.output_dir, "a")
+        text_file.write("Accuracy: %s" % str(errors))
+        text_file.close()
         return errors
