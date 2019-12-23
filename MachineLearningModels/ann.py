@@ -3,11 +3,15 @@ import pandas as pd
 from tensorflow.python.keras.models import Sequential
 from tensorflow.python.keras.layers import Dense
 from tensorflow.python.keras.wrappers.scikit_learn import KerasRegressor
+from tensorflow.python.keras.wrappers.scikit_learn import KerasClassifier
 from MachineLearningModels.model import Model
 from sklearn.model_selection import cross_val_score
 from tensorflow.python.keras.models import load_model
 from sklearn.metrics import r2_score
+from sklearn.model_selection import GridSearchCV
 import os
+import tensorflow as tf
+
 
 
 class NeuralNetwork(Model):
@@ -18,62 +22,133 @@ class NeuralNetwork(Model):
     prediction = None
     model = None
     path = 'models/nn.h5'
+    regressor = None
+    classifier = None
 
+    def __init__(self):
+        Model.__init__(self)
 
-    def __init__(self, X=None, Y=None):
+    def __init__(self, feature_headers, label_headers, type='regressor', epochs=150, batch_size=50, X=None, Y=None):
         if X is not None:
             self.X = X
 
         if Y is not None:
             self.Y = Y
 
-        self.model = Sequential()
+        self.feature_headers = feature_headers
+        self.label_headers = label_headers
 
-    def add(self, layer, input_dim=None, kernel_initializer=None, activation='linear'):
-        if (kernel_initializer == None and input_dim == None):
-            self.model.add(Dense(layer, activation=activation))
-        else:
-            self.model.add(Dense(layer, input_dim=input_dim, kernel_initializer=kernel_initializer, activation=activation))
+        self.no_inputs = len(feature_headers)
+        self.no_outputs = len(label_headers)
+
+        self.epochs = epochs
+        self.batch_size = batch_size
+
+        self.type = type
+        self.model = Sequential()
+        self.init_model()
+
+    def init_model(self):
+        self.model.add(Dense(self.no_inputs*2+1, input_dim=self.no_inputs, kernel_initializer='normal', activation='sigmoid'))
+        self.model.add(Dense(self.no_outputs, activation='sigmoid'))
+        self.model.add(Dense(self.no_outputs, activation='tanh'))
+        self.model.compile(loss='mse', optimizer='adam', metrics=['mse','mae'])
 
     def summary(self):
         self.model.summary()
 
-    def compile(self, loss='mse', optimizer='adam', metrics=['mse','mae']):
+    def compile(self, loss='mae', optimizer='adam', metrics=['mse','mae']):
         self.model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
 
-    def fit(self, X=None, Y=None, epochs=150, batch_size=50,  verbose=1, validation_split=0.2):
+    def fit(self, X=None, Y=None):
         if X is not None:
             self.X = X
 
         if Y is not None:
-            self.Y = Y
+            self.Y = Y.copy()
+
+
+        mapping_flag = False
+        if self.type == 'classifier':
+            self.Y = self.map_str_to_number(self.Y)
 
         print('Neural Network Train started............')
-        self.model.fit(self.X, self.Y, epochs=epochs, batch_size=batch_size,  verbose=verbose, validation_split=validation_split)
+        self.model.fit(self.X.values, self.Y.values, epochs=self.epochs, batch_size=self.batch_size, verbose=0, validation_split=0.2)
         print('Neural Network Train completed..........')
 
         return self.model
 
-    def save(self, path=None):
-        if path is not None:
-            self.path = path
-
-        if not os.path.exists('models'):
-            os.mkdir('models')
-
-        if not os.path.exists(self.path):
-            os.mknod(self.path)
-
-        self.model.save(self.path)
+    def save(self, filename='nn_model.h5'):
+        if not os.path.exists(filename):
+            os.mknod(filename)
+        self.model.save(filename)
 
     def predict(self, test_X):
-        return self.model.predict(test_X)
+        predictions = self.model.predict(test_X.values)
+        if self.type == 'classifier':
+            predictions = predictions.round()
+        return predictions[:,0]
 
     def score(self, test_X, test_Y):
         y_pred = self.predict(test_X)
         r2s = r2_score(test_Y, y_pred, multioutput='variance_weighted')
         return r2s
 
-    def load(self, path):
-         self.model = load_model(path)
-         return self.model
+    def map_str_to_number(self, Y):
+        for label_header in self.label_headers:
+            check_list = pd.Series(Y[label_header])
+            for item in check_list:
+                if type(item) == str:
+                    mapping_flag = True
+                    break
+            if mapping_flag:
+                classes = Y[label_header].unique()
+                mapping_dict = {}
+                index = 0
+                for c in classes:
+                    mapping_dict[c] = index
+                    index += 1
+
+                Y[label_header] = Y[label_header].map(mapping_dict)
+                mapping_flag = False
+        return Y
+
+    def map_number_to_str(self, Y, classes):
+        Y = Y.round()
+        mapping_dict = {}
+        index = 0
+        for c in classes:
+            mapping_dict[index] = c
+            index += 1
+        return Y.map(mapping_dict)
+
+    def getAccuracy(self, test_labels, predictions):
+        df = pd.DataFrame(data=predictions.flatten())
+
+        if self.type == 'classifier':
+            test_labels = self.map_str_to_number(test_labels.copy())
+
+        correct = 0
+        for i in range(len(df)):
+            if (df.values[i] == test_labels.values[i]):
+                correct = correct + 1
+        return correct/len(df)
+
+    def getConfusionMatrix(self, test_labels, predictions, label_headers):
+        if self.type == 'classifier':
+            df = pd.DataFrame(data=predictions.flatten())
+            index = 0
+            for label_header in label_headers:
+                classes = test_labels[label_header].unique()
+                df_tmp = self.map_number_to_str(df.ix[:,index], classes)
+                title = 'Normalized confusion matrix for NeuralNetwork (' + label_header + ')'
+                self.plot_confusion_matrix(test_labels.ix[:,index], df_tmp, classes=classes, normalize=True,
+                          title=title)
+                index = index + 1
+        else:
+            return 'No Confusion Matrix for Regression'
+
+    def load(self, path, type):
+        self.model = load_model(path)
+        self.type = type
+        return self.model

@@ -1,0 +1,6 @@
+Ridge
+AdaBoost
+GradientBoost
+RandomForest
+NeuralNetwork
+PCA+Ridge

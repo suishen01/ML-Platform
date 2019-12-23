@@ -1,0 +1,27 @@
+{
+  'Ridge':
+    {
+    'alpha': 1
+    },
+  'AdaBoost':
+    {
+    'n_estimators': 5
+    },
+  'GradientBoost':
+    {
+    'n_estimators': 5
+    },
+  'RandomForest':
+    {
+    'n_estimators': 5
+    },
+  'NeuralNetwork':
+    {
+    'epochs': 500,
+    'batch_size': 50
+    },
+  'PCA+Ridge':
+    {
+    'n_components':2
+    }
+}

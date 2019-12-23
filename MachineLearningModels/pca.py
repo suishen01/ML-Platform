@@ -1,6 +1,8 @@
 from MachineLearningModels.model import Model
 from sklearn.decomposition import PCA as PCAmodel
 import pandas as pd
+from MachineLearningModels.ridge import Ridge
+import pickle
 
 class PCA(Model):
 
@@ -10,9 +12,12 @@ class PCA(Model):
     prediction = None
     model = None
     n_components = 2
+    ridge_model = None
 
+    def __init__(self):
+        pass
 
-    def __init__(self, X=None, Y=None,  n_components=2):
+    def __init__(self, X=None, Y=None,  n_components=2, type='regressor'):
 
         if X is not None:
             self.X = X
@@ -20,6 +25,7 @@ class PCA(Model):
         if Y is not None:
             self.Y = Y
 
+        self.type = type
         self.n_components = n_components
         self.model = PCAmodel(n_components=n_components)
 
@@ -32,26 +38,25 @@ class PCA(Model):
             self.Y = Y
 
         print('PCA Train started............')
-        data = self.model.fit(self.X)
+        self.X = self.model.fit_transform(self.X)
         print('PCA completed..........')
 
-        return data
+        self.ridge_model = Ridge(type=self.type)
+        print('Ridge Train started............')
+        self.ridge_model.fit(self.X, self.Y)
+        print('Ridge completed..........')
 
-    def fit_transform(self, X=None, Y=None):
-        if X is not None:
-            self.X = X
+        return self.model
 
-        if Y is not None:
-            self.Y = Y
+    def predict(self, test_features):
+        print('Prediction started............')
+        test_features = self.model.fit_transform(test_features)
+        self.predictions = self.ridge_model.predict(test_features)
+        print('Prediction completed..........')
+        return self.predictions
 
-        print('PCA Train/Transform started............')
-        data = self.model.fit_transform(self.X)
-        print('PCA completed..........')
-
-        return data
-
-    def save(self):
-        print('No models will be saved for PCA')
+    def save(self, filename='pcaridge_model.pkl'):
+        pickle.dump(self.ridge_model, open(filename, 'wb'))
 
     def featureImportance(self):
         index = []
@@ -60,3 +65,25 @@ class PCA(Model):
         index.append('PC-' + str(0))
         # return pd.DataFrame(self.model.components_[0].reshape((1,30)),columns=X_headers,index = index)
         return self.model.components_[0]
+
+
+    def getAccuracy(self, test_labels, predictions):
+        correct = 0
+        df = pd.DataFrame(data=predictions.flatten())
+        for i in range(len(df)):
+            if (df.values[i] == test_labels.values[i]):
+                correct = correct + 1
+        return correct/len(df)
+
+    def getConfusionMatrix(self, test_labels, predictions, label_headers):
+        if self.type == 'classifier':
+            df = pd.DataFrame(data=predictions.flatten())
+            index = 0
+            for label_header in label_headers:
+                classes = test_labels[label_header].unique()
+                title = 'Normalized confusion matrix for PCA+Ridge (' + label_header + ')'
+                self.plot_confusion_matrix(test_labels.ix[:,index], df.ix[:,index], classes=classes, normalize=True,
+                          title=title)
+                index = index + 1
+        else:
+            return 'No Confusion Matrix for Regression'

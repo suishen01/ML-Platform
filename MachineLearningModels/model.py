@@ -1,36 +1,66 @@
 import pickle
 import os
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+import numpy as np
 
 class Model:
-
-    path = 'models/random_forest_model.pkl'
-    model = None
-
-    def __init__():
+    def __init__(self):
         pass
 
-    def save(self, path=None):
-        if path is not None:
-            self.path = path
-
-        if not os.path.exists('models'):
-            os.mkdir('models')
-
-        if not os.path.exists(self.path):
-            os.mknod(self.path)
-
-        # Dump the trained decision tree classifier with Pickle
-        # Open the file to save as pkl file
-        model_pkl = open(self.path, 'wb')
-        pickle.dump(self.model, model_pkl)
-        # Close the pickle instances
-        model_pkl.close()
-
-        return self.path
-
-    def load(self, path):
-        # Load from file
-        with open(path, 'rb') as file:
-            self.model = pickle.load(file)
-
+    def load(self, path, type):
+        self.model = pickle.load(open(path, 'rb'))
+        self.type = type
         return self.model
+
+    def plot_confusion_matrix(self, y_true, y_pred, classes,
+                              normalize=False,
+                              title=None,
+                              cmap=plt.cm.Blues):
+        """
+        This function prints and plots the confusion matrix.
+        Normalization can be applied by setting `normalize=True`.
+        """
+        if not title:
+            if normalize:
+                title = 'Normalized confusion matrix'
+            else:
+                title = 'Confusion matrix, without normalization'
+
+        # Compute confusion matrix
+        cm = confusion_matrix(y_true, y_pred)
+        # Only use the labels that appear in the data
+        if normalize:
+            cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+            print("Normalized confusion matrix")
+        else:
+            print('Confusion matrix, without normalization')
+
+        fig, ax = plt.subplots()
+        im = ax.imshow(cm, interpolation='nearest', cmap=cmap)
+        ax.figure.colorbar(im, ax=ax)
+        # We want to show all ticks...
+        ax.set(xticks=np.arange(cm.shape[1]),
+               yticks=np.arange(cm.shape[0]),
+               # ... and label them with the respective list entries
+               xticklabels=classes, yticklabels=classes,
+               title=title,
+               ylabel='Predicted label',
+               xlabel='True label')
+
+        # Rotate the tick labels and set their alignment.
+        plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+                 rotation_mode="anchor")
+
+        # Loop over data dimensions and create text annotations.
+        fmt = '.2f' if normalize else 'd'
+        thresh = cm.max() / 2.
+        for i in range(cm.shape[0]):
+            for j in range(cm.shape[1]):
+                ax.text(j, i, format(cm[i, j], fmt),
+                        ha="center", va="center",
+                        color="white" if cm[i, j] > thresh else "black")
+        fig.tight_layout()
+
+        plt.show()
+        return ax

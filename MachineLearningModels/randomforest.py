@@ -1,6 +1,8 @@
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomForestClassifier
 from MachineLearningModels.model import Model
+import pandas as pd
+import pickle
 
 class RandomForest(Model):
 
@@ -10,6 +12,8 @@ class RandomForest(Model):
     prediction = None
     model = None
 
+    def __init__(self):
+        pass
 
     def __init__(self, X=None, Y=None,  n_estimators=100, type='regressor'):
         if X is not None:
@@ -18,10 +22,12 @@ class RandomForest(Model):
         if Y is not None:
             self.Y = Y
 
+        self.type = type
+
         if (type == 'regressor'):
-            self.model = RandomForestRegressor(n_estimators=n_estimators, verbose=1)
+            self.model = RandomForestRegressor(n_estimators=n_estimators, verbose=0)
         else:
-            self.model = RandomForestClassifier(n_estimators=n_estimators, verbose=1)
+            self.model = RandomForestClassifier(n_estimators=n_estimators, verbose=0)
 
     def fit(self, X=None, Y=None):
         if X is not None:
@@ -42,6 +48,9 @@ class RandomForest(Model):
         print('Prediction completed..........')
         return self.predictions
 
+    def save(self, filename='randomforest_model.pkl'):
+        pickle.dump(self.model, open(filename, 'wb'))
+
     def featureImportance(self):
 
         # Get numerical feature importances
@@ -54,3 +63,24 @@ class RandomForest(Model):
         #[print('Variable: {:20} Importance: {}'.format(*pair)) for pair in feature_importances];
 
         return self.model.feature_importances_
+
+    def getAccuracy(self, test_labels, predictions):
+        correct = 0
+        df = pd.DataFrame(data=predictions.flatten())
+        for i in range(len(df)):
+            if (df.values[i] == test_labels.values[i]):
+                correct = correct + 1
+        return correct/len(df)
+
+    def getConfusionMatrix(self, test_labels, predictions, label_headers):
+        if self.type == 'classifier':
+            df = pd.DataFrame(data=predictions.flatten())
+            index = 0
+            for label_header in label_headers:
+                classes = test_labels[label_header].unique()
+                title = 'Normalized confusion matrix for RandomForest (' + label_header + ')'
+                self.plot_confusion_matrix(test_labels.ix[:,index], df.ix[:,index], classes=classes, normalize=True,
+                          title=title)
+                index = index + 1
+        else:
+            return 'No Confusion Matrix for Regression'
