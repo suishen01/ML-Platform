@@ -3,6 +3,9 @@ from sklearn.linear_model import Ridge as RidgeRegression
 from sklearn.linear_model import RidgeClassifier
 import pandas as pd
 import pickle
+from sklearn.metrics import r2_score, mean_squared_error
+from math import sqrt
+import numpy as np
 
 class Ridge(Model):
 
@@ -64,16 +67,19 @@ class Ridge(Model):
         return self.model.coef_[0]
 
     def getAccuracy(self, test_labels, predictions):
-        correct = 0
         df = pd.DataFrame(data=predictions.flatten())
-        for i in range(len(df)):
-            if (df.values[i] == test_labels.values[i]):
-                correct = correct + 1
-        return correct/len(df)
+        if self.type == 'classifier':
+            correct = 0
+            for i in range(len(df)):
+                if (df.values[i] == test_labels.values[i]):
+                    correct = correct + 1
+            return correct/len(df)
+        else:
+            return 'No Accuracy for Regression'
 
     def getConfusionMatrix(self, test_labels, predictions, label_headers):
+        df = pd.DataFrame(data=predictions.flatten())
         if self.type == 'classifier':
-            df = pd.DataFrame(data=predictions.flatten())
             index = 0
             for label_header in label_headers:
                 classes = test_labels[label_header].unique()
@@ -83,3 +89,38 @@ class Ridge(Model):
                 index = index + 1
         else:
             return 'No Confusion Matrix for Regression'
+
+    def getRSquare(self, test_labels, predictions, mode='single'):
+        df = pd.DataFrame(data=predictions.flatten())
+        if self.type == 'regressor':
+            if mode == 'multiple':
+                errors = r2_score(test_labels, df, multioutput='variance_weighted')
+            else:
+                errors = r2_score(test_labels, df)
+            return errors
+        else:
+            return 'No RSquare for Classification'
+
+    def getMSE(self, test_labels, predictions):
+        df = pd.DataFrame(data=predictions.flatten())
+        if self.type == 'regressor':
+            errors = mean_squared_error(test_labels, df)
+            return errors
+        else:
+            return 'No MSE for Classification'
+
+    def getMAPE(self, test_labels, predictions):
+        df = pd.DataFrame(data=predictions.flatten())
+        if self.type == 'regressor':
+            errors = np.mean(np.abs((test_labels - df.values) / test_labels)) * 100
+            return errors.values[0]
+        else:
+            return 'No MAPE for Classification'
+
+    def getRMSE(self, test_labels, predictions):
+        df = pd.DataFrame(data=predictions.flatten())
+        if self.type == 'regressor':
+            errors = sqrt(mean_squared_error(test_labels, df))
+            return errors
+        else:
+            return 'No RMSE for Classification'
