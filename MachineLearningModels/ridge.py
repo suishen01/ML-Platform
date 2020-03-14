@@ -52,7 +52,7 @@ class Ridge(Model):
         print('Prediction started............')
         self.predictions = self.model.predict(test_features)
         print('Prediction completed..........')
-        return self.predictions
+        return self.predictions[:,0]
 
     def save(self, filename='ridge_model.pkl'):
         pickle.dump(self.model, open(filename, 'wb'))

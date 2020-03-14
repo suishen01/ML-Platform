@@ -54,7 +54,11 @@ class NeuralNetwork(Model):
     def init_model(self):
         self.model.add(Dense(self.no_inputs*2+1, input_dim=self.no_inputs, kernel_initializer='normal', activation='sigmoid'))
         self.model.add(Dense(self.no_outputs, activation='sigmoid'))
-        self.model.add(Dense(self.no_outputs, activation='tanh'))
+        if self.type == 'regressor':
+            output_activation = 'linear'
+        else:
+            output_activation = 'tanh'
+        self.model.add(Dense(self.no_outputs, activation=output_activation))
         self.model.compile(loss='mse', optimizer='adam', metrics=['mse','mae'])
 
     def summary(self):
