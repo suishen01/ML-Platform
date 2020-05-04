@@ -9,6 +9,7 @@ from MachineLearningModels.gradientboost import GradientBoost
 from MachineLearningModels.randomforest import RandomForest
 from MachineLearningModels.svm import KernelSVM
 from MachineLearningModels.ann import NeuralNetwork
+from MachineLearningModels.cnn import ConvolutionalNeuralNetwork
 from MachineLearningModels.lstm import LSTMModel
 from MachineLearningModels.pca import PCA
 import numpy as np
@@ -50,6 +51,8 @@ def build_model(model_type, prediction_type, configs, feature_headers, label_hea
         model = KernelSVM(kernel=configs['kernel'], degree=configs['degree'])
     elif model_type == 'NeuralNetwork':
         model = NeuralNetwork(feature_headers, label_headers, epochs=configs['epochs'], batch_size=configs['batch_size'], type=prediction_type)
+    elif model_type == 'ConvolutionalNeuralNetwork':
+        model = ConvolutionalNeuralNetwork(height=configs['height'], width=configs['width'], dimension=configs['dimension'], classes=configs['classes'], epochs=configs['epochs'], batch_size=configs['batch_size'])
     elif model_type == 'LSTM':
         model = LSTMModel(feature_headers, label_headers, epochs=configs['epochs'], batch_size=configs['batch_size'], type=prediction_type, lookback=configs['lookback'], num_of_cells=configs['num_of_cells'])
     elif model_type == 'PCA+Ridge':

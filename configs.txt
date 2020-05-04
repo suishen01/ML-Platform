@@ -15,10 +15,31 @@
     {
     'n_estimators': 5
     },
+  'KernelSVM':
+    {
+    'kernel': 'poly',
+    'degree': 20
+    },
   'NeuralNetwork':
     {
     'epochs': 500,
     'batch_size': 50
+    },
+  'ConvolutionalNeuralNetwork':
+    {
+    'height': 28,
+    'width': 28,
+    'dimension': 1,
+    'classes': 10,
+    'epochs': 500,
+    'batch_size': 50
+    },
+  'LSTM':
+    {
+    'epochs': 500,
+    'batch_size': 50,
+    'lookback': 7,
+    'num_of_cells': 4
     },
   'PCA+Ridge':
     {

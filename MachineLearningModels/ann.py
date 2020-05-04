@@ -47,6 +47,8 @@ class NeuralNetwork(Model):
         self.epochs = epochs
         self.batch_size = batch_size
 
+        self.mapping_dict = None
+
         self.type = type
         self.model = Sequential()
         self.init_model()
@@ -102,6 +104,12 @@ class NeuralNetwork(Model):
         return r2s
 
     def map_str_to_number(self, Y):
+        if self.mapping_dict is not None:
+            for label_header in self.label_headers:
+                Y[label_header] = Y[label_header].map(self.mapping_dict)
+            return Y
+
+        mapping_dict = None
         for label_header in self.label_headers:
             check_list = pd.Series(Y[label_header])
             for item in check_list:
@@ -118,15 +126,20 @@ class NeuralNetwork(Model):
 
                 Y[label_header] = Y[label_header].map(mapping_dict)
                 mapping_flag = False
+                
+        self.mapping_dict = mapping_dict
         return Y
 
     def map_number_to_str(self, Y, classes):
-        Y = Y.round()
-        mapping_dict = {}
-        index = 0
-        for c in classes:
-            mapping_dict[index] = c
-            index += 1
+        if self.mapping_dict is not None:
+            mapping_dict = self.mapping_dict
+        else:
+            Y = Y.round()
+            mapping_dict = {}
+            index = 0
+            for c in classes:
+                mapping_dict[index] = c
+                index += 1
         return Y.map(mapping_dict)
 
     def getAccuracy(self, test_labels, predictions):
