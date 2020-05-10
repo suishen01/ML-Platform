@@ -44,9 +44,6 @@ def load_model(path, model_type, type, feature_headers, label_headers):
     elif model_type == 'NeuralNetwork':
         model = NeuralNetwork(feature_headers, label_headers)
         model.load(path, type)
-    elif model_type == 'PCA+Ridge':
-        model = PCA()
-        model.load(path, type)
     else:
         print(model_type, ' is not implemented yet')
         model = None
@@ -74,7 +71,24 @@ if __name__ == "__main__":
     labels = data[label_headers].copy()
     features = data[feature_headers].copy()
 
-    model = load_model(modelpath, model_type, type, feature_headers, label_headers)
+    model = None
+    if '[' in model_type:
+        model_type = model_type.replace('[','')
+        model_type = model_type.replace(']','')
+        sub_models = model_type.split(',')
+        sub_models_list = []
+        index = 0
+        for sub_model_type in sub_models:
+            sub_model_type = sub_model_type.lstrip()
+            sub_model_type = sub_model_type.rstrip()
+            if index == 0:
+                tmp_features = PCA.fit(features)
+            else:
+                model = load_model(modelpath, model_type, type, feature_headers, label_headers)
+            index = 1
+    else:
+        model = load_model(modelpath, model_type, type, feature_headers, label_headers)
+
     predictions = model.predict(features)
     #print(predictions)
     dict = {}

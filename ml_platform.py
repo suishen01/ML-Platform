@@ -55,7 +55,7 @@ def build_model(model_type, prediction_type, configs, feature_headers, label_hea
         model = ConvolutionalNeuralNetwork(height=configs['height'], width=configs['width'], dimension=configs['dimension'], classes=configs['classes'], epochs=configs['epochs'], batch_size=configs['batch_size'])
     elif model_type == 'LSTM':
         model = LSTMModel(feature_headers, label_headers, epochs=configs['epochs'], batch_size=configs['batch_size'], type=prediction_type, lookback=configs['lookback'], num_of_cells=configs['num_of_cells'])
-    elif model_type == 'PCA+Ridge':
+    elif model_type == 'PCA':
         model = PCA(n_components=configs['n_components'], type=prediction_type)
     else:
         print(model_type, ' is not implemented yet')
@@ -139,7 +139,7 @@ if __name__ == "__main__":
         indexarrays = read_list(args.index)
         indexarray = indexarrays[0]
     else:
-        indexarray = None
+        print('Please specify the index array')
 
     if args.reports:
         reports_path = args.reports
@@ -162,23 +162,49 @@ if __name__ == "__main__":
     models_list = []
 
     for model_type in models:
-        if model_type in configs.keys():
-            model = build_model(model_type, type, configs[model_type], feature_headers, label_headers)
-            if model:
-                models_list.append(model)
+        if '[' in model_type:
+            model_type = model_type.replace('[','')
+            model_type = model_type.replace(']','')
+            sub_models = model_type.split(',')
+            sub_models_list = []
+            for sub_model_type in sub_models:
+                sub_model_type = sub_model_type.lstrip()
+                sub_model_type = sub_model_type.rstrip()
+                if sub_model_type in configs.keys():
+                    sub_model = build_model(sub_model_type, type, configs[sub_model_type], feature_headers, label_headers)
+                    if sub_model:
+                        sub_models_list.append(sub_model)
+                else:
+                    print('No valid configurations for sub model ', model_type)
+            models_list.append(sub_models_list)
         else:
-            print('No valid configurations for model ', model_type)
+            if model_type in configs.keys():
+                model = build_model(model_type, type, configs[model_type], feature_headers, label_headers)
+                if model:
+                    models_list.append(model)
+            else:
+                print('No valid configurations for model ', model_type)
 
     results = []
     modelindex = 0
     for model in models_list:
-        dict = {}
-        model.fit(train_features, train_labels)
-        model.save()
-        predictions = model.predict(test_features)
-        figpath = str(modelindex) + '.png'
-        result = produce_report(model, reports, test_labels, predictions, label_headers, test_indices, figpath)
-        results.append(result)
+        if isinstance(model, list):
+            tmp_train_features = model[0].fit(train_features, train_labels)
+            model[1].fit(tmp_train_features, train_labels)
+            model[1].save()
+            tmp_test_features = model[0].fit(test_features, None)
+            predictions = model[1].predict(tmp_test_features)
+            figpath = str(modelindex) + '.png'
+            result = produce_report(model[1], reports, test_labels, predictions, label_headers, test_indices, figpath)
+            results.append(result)
+        else:
+            dict = {}
+            model.fit(train_features, train_labels)
+            model.save()
+            predictions = model.predict(test_features)
+            figpath = str(modelindex) + '.png'
+            result = produce_report(model, reports, test_labels, predictions, label_headers, test_indices, figpath)
+            results.append(result)
         modelindex = modelindex + 1
 
     index = 0

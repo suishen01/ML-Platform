@@ -21,6 +21,7 @@ class PCA(Model):
         pass
 
     def __init__(self, X=None, Y=None,  n_components=2, type='regressor'):
+        self.name = 'PCA'
 
         if X is not None:
             self.X = X
@@ -44,12 +45,12 @@ class PCA(Model):
         self.X = self.model.fit_transform(self.X)
         print('PCA completed..........')
 
-        self.ridge_model = Ridge(type=self.type)
-        print('Ridge Train started............')
-        self.ridge_model.fit(self.X, self.Y)
-        print('Ridge completed..........')
-
-        return self.model
+        #self.ridge_model = Ridge(type=self.type)
+        #print('Ridge Train started............')
+        #self.ridge_model.fit(self.X, self.Y)
+        #print('Ridge completed..........')
+        self.X = pd.DataFrame(self.X)
+        return self.X
 
     def predict(self, test_features):
         print('Prediction started............')
