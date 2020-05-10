@@ -86,8 +86,9 @@ def produce_report(model, reports, test_labels, predictions, label_headers, inde
             else:
                 df = pd.DataFrame(data=predictions.flatten())
                 test_labels = test_labels.reset_index(drop=True)
-                plt.plot(df)
-                plt.plot(test_labels, 'r')
+                p, = plt.plot(df, label='prediction')
+                a, = plt.plot(test_labels, 'r', label='actual')
+                plt.legend(handles=[p, a])
                 plt.savefig(figpath)
     return dict
 
@@ -139,7 +140,7 @@ if __name__ == "__main__":
         indexarrays = read_list(args.index)
         indexarray = indexarrays[0]
     else:
-        print('Please specify the index array')
+        indexarray = None
 
     if args.reports:
         reports_path = args.reports
@@ -149,7 +150,10 @@ if __name__ == "__main__":
     reports = read_list(reports_path)
     labels = data[label_headers].copy()
     features = data[feature_headers].copy()
-    indices = data[indexarray].copy()
+    if indexarray:
+        indices = data[indexarray].copy()
+    else:
+        indices = pd.DataFrame(list(range(0, labels.shape[0])), columns=['index'])
 
     train_features, test_features = np.split(features, [int(vr*len(features))])
     train_labels, test_labels = np.split(labels, [int(vr*len(labels))])
