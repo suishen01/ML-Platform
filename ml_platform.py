@@ -86,6 +86,7 @@ def produce_report(model, reports, test_labels, predictions, label_headers, inde
             else:
                 df = pd.DataFrame(data=predictions.flatten())
                 test_labels = test_labels.reset_index(drop=True)
+                plt.figure()
                 p, = plt.plot(df, label='prediction')
                 a, = plt.plot(test_labels, 'r', label='actual')
                 plt.legend(handles=[p, a])
