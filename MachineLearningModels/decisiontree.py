@@ -25,6 +25,8 @@ class DecisionTree(Model):
             self.Y = Y
 
         self.type = type
+        if max_depth == -1:
+            max_depth = None
 
         if (type == 'regressor'):
             self.model = tree.DecisionTreeRegressor(max_depth=max_depth)
