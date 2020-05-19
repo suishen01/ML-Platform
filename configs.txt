@@ -3,17 +3,21 @@
     {
     'alpha': 1
     },
+  'DecisionTree':
+    {
+    'max_depth': 50
+    },
   'AdaBoost':
     {
-    'n_estimators': 5
+    'n_estimators': 200
     },
   'GradientBoost':
     {
-    'n_estimators': 5
+    'n_estimators': 200
     },
   'RandomForest':
     {
-    'n_estimators': 5
+    'n_estimators': 50
     },
   'KernelSVM':
     {
@@ -22,8 +26,8 @@
     },
   'NeuralNetwork':
     {
-    'epochs': 500,
-    'batch_size': 50
+    'epochs': 1000,
+    'batch_size': 200
     },
   'ConvolutionalNeuralNetwork':
     {
@@ -41,7 +45,7 @@
     'lookback': 7,
     'num_of_cells': 4
     },
-  'PCA+Ridge':
+  'PCA':
     {
     'n_components':2
     }

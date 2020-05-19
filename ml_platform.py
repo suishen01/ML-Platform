@@ -4,6 +4,7 @@ import argparse
 from Utils.csvread import CsvReader
 from DataPreprocessor.dataSQL import SQL
 from MachineLearningModels.ridge import Ridge
+from MachineLearningModels.decisiontree import DecisionTree
 from MachineLearningModels.adaboost import AdaBoost
 from MachineLearningModels.gradientboost import GradientBoost
 from MachineLearningModels.randomforest import RandomForest
@@ -41,6 +42,8 @@ def read_list(path):
 def build_model(model_type, prediction_type, configs, feature_headers, label_headers):
     if model_type == 'Ridge':
         model = Ridge(alpha=configs['alpha'], type=prediction_type)
+    elif model_type == 'DecisionTree':
+        model = DecisionTree(max_depth=configs['max_depth'], type=prediction_type)
     elif model_type == 'AdaBoost':
         model = AdaBoost(n_estimators=configs['n_estimators'], type=prediction_type)
     elif model_type == 'GradientBoost':
@@ -111,6 +114,7 @@ if __name__ == "__main__":
 
     alldata = alldata.fillna(0)
     data = alldata
+    data = data.sample(frac=1).reset_index(drop=True)
 
     if args.validationratio:
         vr = args.validationratio
