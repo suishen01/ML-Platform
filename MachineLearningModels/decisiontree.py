@@ -82,7 +82,7 @@ class DecisionTree(Model):
             index = 0
             for label_header in label_headers:
                 classes = test_labels[label_header].unique()
-                title = 'Normalized confusion matrix for RandomForest (' + label_header + ')'
+                title = 'Normalized confusion matrix for Decision Tree (' + label_header + ')'
                 self.plot_confusion_matrix(test_labels.ix[:,index], df.ix[:,index], classes=classes, normalize=True,
                           title=title)
                 index = index + 1
