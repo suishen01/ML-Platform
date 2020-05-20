@@ -19,12 +19,15 @@ class GradientBoost(Model):
     def __init__(self):
         pass
 
-    def __init__(self, X=None, Y=None,  n_estimators=100, type='regressor'):
+    def __init__(self, X=None, Y=None, label_headers=None,  n_estimators=100, type='regressor'):
         if X is not None:
             self.X = X
 
         if Y is not None:
             self.Y = Y
+
+        self.mapping_dict = None
+        self.label_headers = label_headers
 
         self.type = type
 
@@ -41,6 +44,9 @@ class GradientBoost(Model):
 
         if Y is not None:
             self.Y = Y
+
+        if self.type == 'classifier':
+            self.map_str_to_number(Y)
 
         print('Gradient Boost Train started............')
         self.model.fit(self.X, self.Y)

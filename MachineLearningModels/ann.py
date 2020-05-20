@@ -8,12 +8,14 @@ from MachineLearningModels.model import Model
 from sklearn.model_selection import cross_val_score
 from tensorflow.python.keras.models import load_model
 from sklearn.metrics import r2_score
+from sklearn.metrics import roc_curve
 from sklearn.model_selection import GridSearchCV
 import os
 import tensorflow as tf
 from sklearn.metrics import r2_score, mean_squared_error
 from math import sqrt
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 
@@ -76,8 +78,6 @@ class NeuralNetwork(Model):
         if Y is not None:
             self.Y = Y.copy()
 
-
-        mapping_flag = False
         if self.type == 'classifier':
             self.Y = self.map_str_to_number(self.Y)
 
@@ -126,21 +126,24 @@ class NeuralNetwork(Model):
 
                 Y[label_header] = Y[label_header].map(mapping_dict)
                 mapping_flag = False
-                
+
         self.mapping_dict = mapping_dict
         return Y
 
     def map_number_to_str(self, Y, classes):
+        Y = Y.round()
+        Y = Y.astype(int)
         if self.mapping_dict is not None:
             mapping_dict = self.mapping_dict
         else:
-            Y = Y.round()
             mapping_dict = {}
             index = 0
             for c in classes:
                 mapping_dict[index] = c
                 index += 1
-        return Y.map(mapping_dict)
+
+        inv_map = {v: k for k, v in mapping_dict.items()}
+        return Y.map(inv_map)
 
     def getAccuracy(self, test_labels, predictions):
         df = pd.DataFrame(data=predictions.flatten())
@@ -165,6 +168,22 @@ class NeuralNetwork(Model):
                 self.plot_confusion_matrix(test_labels.ix[:,index], df_tmp, classes=classes, normalize=True,
                           title=title)
                 index = index + 1
+        else:
+            return 'No Confusion Matrix for Regression'
+
+    def getROC(self, test_labels, predictions, label_headers):
+        predictions=pd.DataFrame(data=predictions.flatten())
+        predictions.columns=test_labels.columns.values
+        if self.type == 'classifier':
+            test_labels = self.map_str_to_number(test_labels)
+            fpr, tpr, _ = roc_curve(test_labels, predictions)
+            plt.figure(1)
+            plt.plot([0, 1], [0, 1], 'k--')
+            plt.plot(fpr, tpr)
+            plt.xlabel('False positive rate')
+            plt.ylabel('True positive rate')
+            plt.title('ROC curve')
+            plt.show()
         else:
             return 'No Confusion Matrix for Regression'
 

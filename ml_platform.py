@@ -41,15 +41,15 @@ def read_list(path):
 
 def build_model(model_type, prediction_type, configs, feature_headers, label_headers):
     if model_type == 'Ridge':
-        model = Ridge(alpha=configs['alpha'], type=prediction_type)
+        model = Ridge(label_headers=label_headers, alpha=configs['alpha'], type=prediction_type)
     elif model_type == 'DecisionTree':
-        model = DecisionTree(max_depth=configs['max_depth'], type=prediction_type)
+        model = DecisionTree(label_headers=label_headers, max_depth=configs['max_depth'], type=prediction_type)
     elif model_type == 'AdaBoost':
-        model = AdaBoost(n_estimators=configs['n_estimators'], type=prediction_type)
+        model = AdaBoost(label_headers=label_headers, n_estimators=configs['n_estimators'], type=prediction_type)
     elif model_type == 'GradientBoost':
-        model = GradientBoost(n_estimators=configs['n_estimators'], type=prediction_type)
+        model = GradientBoost(label_headers=label_headers, n_estimators=configs['n_estimators'], type=prediction_type)
     elif model_type == 'RandomForest':
-        model = RandomForest(n_estimators=configs['n_estimators'], type=prediction_type)
+        model = RandomForest(label_headers=label_headers, n_estimators=configs['n_estimators'], type=prediction_type)
     elif model_type == 'KernelSVM':
         model = KernelSVM(kernel=configs['kernel'], degree=configs['degree'])
     elif model_type == 'NeuralNetwork':
@@ -73,6 +73,8 @@ def produce_report(model, reports, test_labels, predictions, label_headers, inde
             dict['Accuracy'] = model.getAccuracy(test_labels, predictions)
         elif report == 'ConfusionMatrix':
             model.getConfusionMatrix(test_labels, predictions, label_headers)
+        elif report == 'ROC':
+            model.getROC(test_labels, predictions, label_headers)
         elif report == 'RSquare':
             dict['RSquare'] = model.getRSquare(test_labels, predictions)
         elif report == 'MSE':

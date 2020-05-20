@@ -18,7 +18,7 @@ class RandomForest(Model):
     def __init__(self):
         pass
 
-    def __init__(self, X=None, Y=None,  n_estimators=100, type='regressor'):
+    def __init__(self, X=None, Y=None, label_headers=None,  n_estimators=100, type='regressor'):
         if X is not None:
             self.X = X
 
@@ -26,6 +26,9 @@ class RandomForest(Model):
             self.Y = Y
 
         self.type = type
+
+        self.mapping_dict = None
+        self.label_headers = label_headers
 
         if (type == 'regressor'):
             self.model = RandomForestRegressor(n_estimators=n_estimators, verbose=0)
@@ -39,6 +42,9 @@ class RandomForest(Model):
         if Y is not None:
             self.Y = Y
 
+        if self.type == 'classifier':
+            self.map_str_to_number(Y)
+            
         print('Random Forest Train started............')
         self.model.fit(self.X, self.Y)
         print('Random Forest Train completed..........')

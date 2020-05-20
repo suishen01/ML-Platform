@@ -5,6 +5,7 @@ import pickle
 from sklearn.metrics import r2_score, mean_squared_error
 from math import sqrt
 import numpy as np
+import matplotlib.pyplot as plt
 
 class DecisionTree(Model):
 
@@ -17,13 +18,15 @@ class DecisionTree(Model):
     def __init__(self):
         pass
 
-    def __init__(self, X=None, Y=None,  max_depth=None, type='regressor'):
+    def __init__(self, X=None, Y=None, label_headers=None, max_depth=None, type='regressor'):
         if X is not None:
             self.X = X
 
         if Y is not None:
             self.Y = Y
 
+        self.mapping_dict = None
+        self.label_headers = label_headers
         self.type = type
         if max_depth == -1:
             max_depth = None
@@ -39,6 +42,9 @@ class DecisionTree(Model):
 
         if Y is not None:
             self.Y = Y
+
+        if self.type == 'classifier':
+            self.map_str_to_number(Y)
 
         print('Decision Tree Train started............')
         self.model.fit(self.X, self.Y)
@@ -56,16 +62,6 @@ class DecisionTree(Model):
         pickle.dump(self.model, open(filename, 'wb'))
 
     def featureImportance(self):
-
-        # Get numerical feature importances
-        #importances = list(self.model.feature_importances_)
-        # List of tuples with variable and importance
-        #feature_importances = [(feature, round(importance, 2)) for feature, importance in zip(X_headers, importances)]
-        # Sort the feature importances by most important first
-        #feature_importances = sorted(self.model.feature_importances_, key = lambda x: x[1], reverse = True)
-        # Print out the feature and importances
-        #[print('Variable: {:20} Importance: {}'.format(*pair)) for pair in feature_importances];
-
         return self.model.feature_importances_
 
     def getAccuracy(self, test_labels, predictions):

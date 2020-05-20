@@ -18,7 +18,7 @@ class Ridge(Model):
     def __init__(self):
         pass
 
-    def __init__(self, X=None, Y=None,  alpha=1, type='regressor'):
+    def __init__(self, X=None, Y=None, label_headers=None,  alpha=1, type='regressor'):
 
         if X is not None:
             self.X = X
@@ -27,6 +27,9 @@ class Ridge(Model):
             self.Y = Y
 
         self.type = type
+
+        self.mapping_dict = None
+        self.label_headers = label_headers
 
         if self.type == 'regressor':
             self.model = RidgeRegression(alpha=alpha)
@@ -41,6 +44,9 @@ class Ridge(Model):
 
         if Y is not None:
             self.Y = Y
+
+        if self.type == 'classifier':
+            self.map_str_to_number(Y)
 
         print('Ridge Regression Train started............')
         self.model.fit(self.X, self.Y)
