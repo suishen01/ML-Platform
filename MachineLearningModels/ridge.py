@@ -72,16 +72,20 @@ class Ridge(Model):
 #        feature_importance = set(feature_importance_)
         return self.model.coef_[0]
 
-    def getAccuracy(self, test_labels, predictions):
-        df = pd.DataFrame(data=predictions.flatten())
+    def getAccuracy(self, test_labels, predictions, origin=0, hitmissr=0.8):
         if self.type == 'classifier':
             correct = 0
+            df = pd.DataFrame(data=predictions.flatten())
             for i in range(len(df)):
                 if (df.values[i] == test_labels.values[i]):
                     correct = correct + 1
-            return correct/len(df)
         else:
-            return 'No Accuracy for Regression'
+            correct = 0
+            df = pd.DataFrame(data=predictions.flatten())
+            for i in range(len(df)):
+                if 1 - abs(df.values[i] - test_labels.values[i])/abs(df.values[i]) >= hitmissr:
+                    correct = correct + 1
+        return float(correct)/len(df)
 
     def getConfusionMatrix(self, test_labels, predictions, label_headers):
         df = pd.DataFrame(data=predictions.flatten())

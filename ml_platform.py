@@ -31,6 +31,8 @@ def init_arg_parser():
     parser.add_argument('-c','--config', help='Configuration file',required=False)
     parser.add_argument('-m','--models', help='Involved ML models', required=False)
     parser.add_argument('-r','--reports', help='Produced results', required=False)
+    parser.add_argument('-origin','--origin', help='For classification accuracy', required=False)
+    parser.add_argument('-hmr','--hitmissratio', help='For classification accuracy', required=False)
     return parser
 
 def read_dict(path):
@@ -66,11 +68,12 @@ def build_model(model_type, prediction_type, configs, feature_headers, label_hea
 
     return model
 
-def produce_report(model, reports, test_labels, predictions, label_headers, indexarray, figpath):
+def produce_report(model, reports, test_labels, predictions, label_headers, indexarray, figpath, origin=None, hitmissr=None):
     dict = {}
     for report in reports:
         if report == 'Accuracy':
-            dict['Accuracy'] = model.getAccuracy(test_labels, predictions)
+            kwargs = {'origin':origin, 'hitmissr':hitmissr}
+            dict['Accuracy'] = model.getAccuracy(test_labels, predictions, {k: v for k, v in kwargs.items() if v is not None})
         elif report == 'ConfusionMatrix':
             model.getConfusionMatrix(test_labels, predictions, label_headers)
         elif report == 'ROC':
@@ -206,7 +209,7 @@ if __name__ == "__main__":
             tmp_test_features = model[0].fit(test_features, None)
             predictions = model[1].predict(tmp_test_features)
             figpath = str(modelindex) + '.png'
-            result = produce_report(model[1], reports, test_labels, predictions, label_headers, test_indices, figpath)
+            result = produce_report(model[1], reports, test_labels, predictions, label_headers, test_indices, figpath, args.origin, args.hitmissratio)
             results.append(result)
         else:
             dict = {}

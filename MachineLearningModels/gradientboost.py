@@ -66,13 +66,20 @@ class GradientBoost(Model):
     def featureImportance(self):
         return self.model.feature_importances_
 
-    def getAccuracy(self, test_labels, predictions):
-        correct = 0
-        df = pd.DataFrame(data=predictions.flatten())
-        for i in range(len(df)):
-            if (df.values[i] == test_labels.values[i]):
-                correct = correct + 1
-        return correct/len(df)
+    def getAccuracy(self, test_labels, predictions, origin=0, hitmissr=0.8):
+        if self.type == 'classifier':
+            correct = 0
+            df = pd.DataFrame(data=predictions.flatten())
+            for i in range(len(df)):
+                if (df.values[i] == test_labels.values[i]):
+                    correct = correct + 1
+        else:
+            correct = 0
+            df = pd.DataFrame(data=predictions.flatten())
+            for i in range(len(df)):
+                if 1 - abs(df.values[i] - test_labels.values[i])/abs(df.values[i]) >= hitmissr:
+                    correct = correct + 1
+        return float(correct)/len(df)
 
     def getConfusionMatrix(self, test_labels, predictions, label_headers):
         if self.type == 'classifier':
