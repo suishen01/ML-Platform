@@ -25,7 +25,7 @@ def init_arg_parser():
     parser.add_argument('-out', '--output', help="Outputs for the ML model", required=True)
     parser.add_argument('-t', '--type', help="Prediction type, c for classification, r for regression", required=True)
 
-    parser.add_argument('-vr', '--validationratio',type=float, default=0.9, help='Validation Ratio (default: 0.7)',required=False)
+    parser.add_argument('-vr', '--validationratio',type=float, default=1, help='Validation Ratio (default: 0.7)',required=False)
     parser.add_argument('-index', '--index', help="Index array for plotting", required=False)
     parser.add_argument('-val', '--validation', help='Validation dataset',required=False)
     parser.add_argument('-c','--config', help='Configuration file',required=False)
@@ -96,7 +96,13 @@ def produce_report(model, reports, test_labels, predictions, label_headers, inde
                 test_labels = test_labels.reset_index(drop=True)
                 plt.figure()
                 p, = plt.plot(df, label='prediction')
-                a, = plt.plot(test_labels, 'r', label='actual')
+                a, = plt.plot(test_labels, label='actual')
+                if indexarray.shape[0] > 30:
+                    for i in indexarray.index:
+                        mod5 = int(indexarray.shape[0]/5)
+                        if i % (int(indexarray.shape[0]/mod5)) != 0:
+                            indexarray[i] = ''
+                plt.xticks(df.index, indexarray, rotation='vertical')
                 plt.legend(handles=[p, a])
                 plt.savefig(figpath)
     return dict
@@ -119,12 +125,12 @@ if __name__ == "__main__":
 
     alldata = alldata.fillna(0)
     data = alldata
-    data = data.sample(frac=1).reset_index(drop=True)
+    #data = data.sample(frac=1).reset_index(drop=True)
 
     if args.validationratio:
         vr = args.validationratio
     else:
-        vr = 0.6
+        vr = 0.9
 
     if args.validation:
         validation_data = csvreader.read(args.validation)
@@ -158,8 +164,10 @@ if __name__ == "__main__":
         reports_path = 'reports.txt'
 
     reports = read_list(reports_path)
+
     labels = data[label_headers].copy()
     features = data[feature_headers].copy()
+
     if indexarray:
         indices = data[indexarray].copy()
     else:
@@ -169,9 +177,11 @@ if __name__ == "__main__":
     train_labels, test_labels = np.split(labels, [int(vr*len(labels))])
     train_indices, test_indices = np.split(indices, [int(vr*len(indices))])
 
-    if validation_data:
-        test_labels = validation_data[labels].copy()
-        test_features = validation_data[features].copy()
+    if validation_data is not None:
+        test_labels = validation_data[label_headers].copy()
+        test_features = validation_data[feature_headers].copy()
+        test_indices = validation_data[indexarray].copy()
+
 
     models_list = []
 
