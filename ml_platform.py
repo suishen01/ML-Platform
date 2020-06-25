@@ -25,7 +25,7 @@ def init_arg_parser():
     parser.add_argument('-out', '--output', help="Outputs for the ML model", required=True)
     parser.add_argument('-t', '--type', help="Prediction type, c for classification, r for regression", required=True)
 
-    parser.add_argument('-vr', '--validationratio',type=float, default=1, help='Validation Ratio (default: 0.7)',required=False)
+    parser.add_argument('-vr', '--validationratio',type=float, default=0.7, help='Validation Ratio (default: 0.7)',required=False)
     parser.add_argument('-index', '--index', help="Index array for plotting", required=False)
     parser.add_argument('-val', '--validation', help='Validation dataset',required=False)
     parser.add_argument('-c','--config', help='Configuration file',required=False)
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     if args.validationratio:
         vr = args.validationratio
     else:
-        vr = 0.9
+        vr = 0.7
 
     if args.validation:
         validation_data = csvreader.read(args.validation)
