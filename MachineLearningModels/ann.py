@@ -87,9 +87,7 @@ class NeuralNetwork(Model):
 
         return self.model
 
-    def save(self, filename='nn_model.h5'):
-        if not os.path.exists(filename):
-            os.mknod(filename)
+    def save(self, filename='nn_model_test.h5'):
         self.model.save(filename)
 
     def predict(self, test_X):
