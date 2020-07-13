@@ -81,8 +81,6 @@ class ConvolutionalNeuralNetwork(Model):
         return self.model
 
     def save(self, filename='cnn_model.h5'):
-        if not os.path.exists(filename):
-            os.mknod(filename)
         self.model.save(filename)
 
     def predict(self, test_X):
