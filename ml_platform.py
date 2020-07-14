@@ -71,12 +71,14 @@ def build_model(model_type, prediction_type, configs, feature_headers, label_hea
 
     return model
 
-def produce_report(model, reports, test_labels, predictions, label_headers, indexarray, figpath, origin=None, hitmissr=None):
+def produce_report(model, reports, test_labels, predictions, feature_headers, label_headers, indexarray, figpath, origin=None, hitmissr=None):
     dict = {}
+    dataframe = None
     for report in reports:
         if report == 'Accuracy':
             kwargs = {'origin':origin, 'hitmissr':hitmissr}
             dict['Accuracy'] = model.getAccuracy(test_labels, predictions, {k: v for k, v in kwargs.items() if v is not None})
+
         elif report == 'ConfusionMatrix':
             model.getConfusionMatrix(test_labels, predictions, label_headers)
         elif report == 'ROC':
@@ -90,7 +92,11 @@ def produce_report(model, reports, test_labels, predictions, label_headers, inde
         elif report == 'RMSE':
             dict['RMSE'] = model.getRMSE(test_labels, predictions)
         elif report == 'FeatureImportance':
-            dict['FeatureImportance'] = model.featureImportance()
+            fis = model.featureImportance()
+            i = 0
+            for fi in fis:
+                dict['FeatureImportance_'+feature_headers[i]] = fi
+                i = i + 1
         elif report == 'Plot':
             if model.type == 'classifier':
                 print('No plotting for classification')
@@ -108,7 +114,11 @@ def produce_report(model, reports, test_labels, predictions, label_headers, inde
                 plt.xticks(df.index, indexarray, rotation='vertical')
                 plt.legend(handles=[p, a])
                 plt.savefig(figpath)
-    return dict
+    df = pd.DataFrame(dict.items(), columns=['key', 'value'])
+    df = df.sort_values(by=['key'])
+    df = df.set_index('key')
+    df = df.T
+    return df
 
 
 if __name__ == "__main__":
@@ -172,9 +182,9 @@ if __name__ == "__main__":
         predictionpath = 'predictions'
 
     if args.resultpath:
-        resultpath = args.resultpath + '.txt'
+        resultpath = args.resultpath
     else:
-        resultpath = 'results.txt'
+        resultpath = 'results'
 
     if args.figurepath:
         figurepath = args.figurepath
@@ -234,15 +244,14 @@ if __name__ == "__main__":
     index = test_indices.copy()
     for model in models_list:
         if isinstance(model, list):
-            index = test_indices.copy()
             tmp_train_features = model[0].fit(train_features, train_labels)
             model[1].fit(tmp_train_features, train_labels)
             model[1].save()
             tmp_test_features = model[0].fit(test_features, None)
             predictions = model[1].predict(tmp_test_features)
             figpath = figurepath + '_' + str(modelindex) + '.png'
-            result = produce_report(model[1], reports, test_labels, predictions, label_headers, test_indices, figpath, args.origin, args.hitmissratio)
-            results.append(result)
+            resultdf = produce_report(model[1], reports, test_labels, predictions, feature_headers, label_headers, test_indices, figpath, args.origin, args.hitmissratio)
+            resultdf.to_csv(resultpath + '_' + str(modelindex) + '.csv', index=False)
             predictions = pd.DataFrame(data=predictions.flatten())
             test_labels = test_labels.reset_index(drop=True)
             tmp_df = pd.concat([index, predictions, test_labels], axis=1)
@@ -254,8 +263,8 @@ if __name__ == "__main__":
             model.save()
             predictions = model.predict(test_features)
             figpath = figurepath + '_' + str(modelindex) + '.png'
-            result = produce_report(model, reports, test_labels, predictions, label_headers, test_indices, figpath)
-            results.append(result)
+            resultdf = produce_report(model, reports, test_labels, predictions, feature_headers, label_headers, test_indices, figpath)
+            resultdf.to_csv(resultpath + '_' + str(modelindex) + '.csv', index=False)
             predictions = pd.DataFrame(data=predictions.flatten())
             index = index.reset_index(drop=True)
             test_labels = test_labels.reset_index(drop=True)
@@ -263,11 +272,3 @@ if __name__ == "__main__":
             tmp_df = tmp_df.rename(columns={0:'predictions', label_headers[0]:'actual'})
             tmp_df.to_csv(predictionpath + '_' + str(modelindex) + '.csv', index=False)
         modelindex = modelindex + 1
-
-    index = 0
-    with open(resultpath, 'w') as f:
-        for item in results:
-            f.write(models[index])
-            f.write(':\n')
-            f.write("%s\n" % item)
-            index += 1
