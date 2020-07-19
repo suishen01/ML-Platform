@@ -29,10 +29,11 @@ def init_arg_parser():
     parser.add_argument('-index', '--index', help="Index array for plotting", required=True)
 
     parser.add_argument('-pp', '--predictionpath', help="Predictions path", required=False)
+    parser.add_argument('-kfold', '--kfold', help="Enable kfold validation",type=int, default=1, required=False)
     parser.add_argument('-rp', '--resultpath', help="Results path", required=False)
     parser.add_argument('-fp', '--figurepath', help="Figures path", required=False)
-    parser.add_argument('-vr', '--validationratio',type=float, default=0.7, help='Validation Ratio (default: 0.7)',required=False)
-    parser.add_argument('-val', '--validation', help='Validation dataset',required=False)
+    parser.add_argument('-tr', '--testratio',type=float, default=0.7, help='Test Ratio (default: 0.7)',required=False)
+    parser.add_argument('-test', '--test', help='Validation dataset',required=False)
     parser.add_argument('-c','--config', help='Configuration file',required=False)
     parser.add_argument('-m','--models', help='Involved ML models', required=False)
     parser.add_argument('-r','--reports', help='Produced results', required=False)
@@ -146,16 +147,16 @@ if __name__ == "__main__":
     data = alldata
     #data = data.sample(frac=1).reset_index(drop=True)
 
-    if args.validationratio:
-        vr = args.validationratio
+    if args.testratio:
+        vr = args.testratio
     else:
         vr = 0.7
 
-    if args.validation:
-        validation_data = csvreader.read(args.validation)
+    if args.test:
+        test_data = csvreader.read(args.test)
         vr = 1
     else:
-        validation_data = None
+        test_data = None
 
     if args.config:
         config_path = args.config
@@ -199,70 +200,117 @@ if __name__ == "__main__":
 
     reports = read_list(reports_path)
 
-    labels = data[label_headers].copy()
-    features = data[feature_headers].copy()
 
     if indexarray:
         indices = data[indexarray].copy()
     else:
         indices = pd.DataFrame(list(range(0, labels.shape[0])), columns=['index'])
 
-    models_list = []
+    if test_data is not None:
+        train_data = data
+        test_labels = test_data[label_headers].copy()
+        test_features = test_data[feature_headers].copy()
+        test_indices = test_data[indexarray].copy()
+    else:
+        train_data, test_data = np.split(data, [int(vr*len(data))])
 
-    for model_type in models:
-        if '[' in model_type:
-            model_type = model_type.replace('[','')
-            model_type = model_type.replace(']','')
-            sub_models = model_type.split(',')
-            sub_models_list = []
-            for sub_model_type in sub_models:
-                sub_model_type = sub_model_type.lstrip()
-                sub_model_type = sub_model_type.rstrip()
-                if sub_model_type in configs.keys():
-                    if (sub_model_type == 'Lasso' or sub_model_type == 'PLS') and type == 'classifier':
+    if args.kfold > 1:
+        shuffled = train_data.sample(frac=1)
+        kfolddata = np.array_split(shuffled, args.kfold)
+    else:
+        kfolddata = [train_data]
+
+    final_model_list = []
+    final_score_list = []
+    i = 0
+    while i < len(models):
+        final_model_list.append(0)
+        final_score_list.append(-1)
+        i += 1
+
+    counter = 0
+
+    for folddata in kfolddata:
+        counter = counter + 1
+
+        if args.kfold > 1:
+            folddata = folddata.reset_index(drop=True)
+            print("Fold " + str(counter) + "/" + str(args.kfold) + " started: ")
+
+        labels = folddata[label_headers].copy()
+        features = folddata[feature_headers].copy()
+
+        train_features, tmp_test_features = np.split(features, [int(0.7*len(features))])
+        train_labels, tmp_test_labels = np.split(labels, [int(0.7*len(labels))])
+        train_indices, tmp_test_indices = np.split(indices, [int(0.7*len(indices))])
+
+        models_list = []
+
+        for model_type in models:
+            if '[' in model_type:
+                model_type = model_type.replace('[','')
+                model_type = model_type.replace(']','')
+                sub_models = model_type.split(',')
+                sub_models_list = []
+                for sub_model_type in sub_models:
+                    sub_model_type = sub_model_type.lstrip()
+                    sub_model_type = sub_model_type.rstrip()
+                    if sub_model_type in configs.keys():
+                        if (sub_model_type == 'Lasso' or sub_model_type == 'PLS') and type == 'classifier':
+                            print('No classification for Lasso or PLS')
+                        else:
+                            sub_model = build_model(sub_model_type, type, configs[sub_model_type], feature_headers, label_headers)
+                            if sub_model:
+                                sub_models_list.append(sub_model)
+                    else:
+                        print('No valid configurations for sub model ', model_type)
+                models_list.append(sub_models_list)
+            else:
+                if model_type in configs.keys():
+                    if (model_type == 'Lasso' or model_type == 'PLS') and type == 'classifier':
                         print('No classification for Lasso or PLS')
                     else:
-                        sub_model = build_model(sub_model_type, type, configs[sub_model_type], feature_headers, label_headers)
-                        if sub_model:
-                            sub_models_list.append(sub_model)
+                        model = build_model(model_type, type, configs[model_type], feature_headers, label_headers)
+                        if model:
+                            models_list.append(model)
                 else:
-                    print('No valid configurations for sub model ', model_type)
-            models_list.append(sub_models_list)
-        else:
-            if model_type in configs.keys():
-                if (model_type == 'Lasso' or model_type == 'PLS') and type == 'classifier':
-                    print('No classification for Lasso or PLS')
-                else:
-                    model = build_model(model_type, type, configs[model_type], feature_headers, label_headers)
-                    if model:
-                        models_list.append(model)
+                    print('No valid configurations for model ', model_type)
+
+        results = []
+        modelindex = 0
+        index = tmp_test_indices.copy()
+        kwargs = {'origin':args.origin, 'hitmissr':args.hitmissratio}
+        for model in models_list:
+            if isinstance(model, list):
+                first_train_features = model[0].fit(train_features, train_labels)
+                model[1].fit(first_train_features, train_labels)
+                model[1].save()
+                first_test_features = model[0].fit(tmp_test_features, None)
+                predictions = model[1].predict(first_test_features)
+                tmp_accuracy = model[1].getAccuracy(tmp_test_labels, predictions, {k: v for k, v in kwargs.items() if v is not None})
+                if tmp_accuracy >= final_score_list[modelindex]:
+                    final_score_list[modelindex] = tmp_accuracy
+                    final_model_list[modelindex] = model
             else:
-                print('No valid configurations for model ', model_type)
+                dict = {}
+                model.fit(train_features, train_labels)
+                model.save()
+                predictions = model.predict(tmp_test_features)
+                tmp_accuracy = model.getAccuracy(tmp_test_labels, predictions, {k: v for k, v in kwargs.items() if v is not None})
+                if tmp_accuracy >= final_score_list[modelindex]:
+                    final_score_list[modelindex] = tmp_accuracy
+                    final_model_list[modelindex] = model
+            modelindex = modelindex + 1
 
 
-
-
-
-    train_features, test_features = np.split(features, [int(vr*len(features))])
-    train_labels, test_labels = np.split(labels, [int(vr*len(labels))])
-    train_indices, test_indices = np.split(indices, [int(vr*len(indices))])
-
-    if validation_data is not None:
-        test_labels = validation_data[label_headers].copy()
-        test_features = validation_data[feature_headers].copy()
-        test_indices = validation_data[indexarray].copy()
-
-
-    results = []
     modelindex = 0
-    index = test_indices.copy()
-    for model in models_list:
+    for model in final_model_list:
         if isinstance(model, list):
-            tmp_train_features = model[0].fit(train_features, train_labels)
-            model[1].fit(tmp_train_features, train_labels)
+            first_train_features = model[0].fit(train_features, train_labels)
+            model[1].fit(first_train_features, train_labels)
             model[1].save()
-            tmp_test_features = model[0].fit(test_features, None)
-            predictions = model[1].predict(tmp_test_features)
+            first_test_features = model[0].fit(test_features, None)
+            predictions = model[1].predict(first_test_features)
             figpath = figurepath + '_' + str(modelindex) + '.png'
             resultdf = produce_report(model[1], reports, test_labels, predictions, feature_headers, label_headers, test_indices, figpath, args.origin, args.hitmissratio)
             resultdf.to_csv(resultpath + '_' + str(modelindex) + '.csv', index=False)
@@ -273,8 +321,6 @@ if __name__ == "__main__":
             tmp_df.to_csv(predictionpath + '_' + str(modelindex) + '.csv', index=False)
         else:
             dict = {}
-            model.fit(train_features, train_labels)
-            model.save()
             predictions = model.predict(test_features)
             figpath = figurepath + '_' + str(modelindex) + '.png'
             resultdf = produce_report(model, reports, test_labels, predictions, feature_headers, label_headers, test_indices, figpath)
