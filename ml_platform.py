@@ -13,6 +13,8 @@ from MachineLearningModels.ann import NeuralNetwork
 from MachineLearningModels.cnn import ConvolutionalNeuralNetwork
 from MachineLearningModels.lstm import LSTMModel
 from MachineLearningModels.pca import PCA
+from MachineLearningModels.lasso import Lasso
+from MachineLearningModels.pls import PLS
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -65,6 +67,10 @@ def build_model(model_type, prediction_type, configs, feature_headers, label_hea
         model = LSTMModel(feature_headers, label_headers, epochs=configs['epochs'], batch_size=configs['batch_size'], type=prediction_type, lookback=configs['lookback'], num_of_cells=configs['num_of_cells'])
     elif model_type == 'PCA':
         model = PCA(n_components=configs['n_components'], type=prediction_type)
+    elif model_type == 'PLS':
+        model = PLS(n_components=configs['n_components'], type=prediction_type)
+    elif model_type == 'Lasso':
+        model = Lasso(label_headers=label_headers, alpha=configs['alpha'], type=prediction_type)
     else:
         print(model_type, ' is not implemented yet')
         model = None
@@ -201,18 +207,6 @@ if __name__ == "__main__":
     else:
         indices = pd.DataFrame(list(range(0, labels.shape[0])), columns=['index'])
 
-
-
-    train_features, test_features = np.split(features, [int(vr*len(features))])
-    train_labels, test_labels = np.split(labels, [int(vr*len(labels))])
-    train_indices, test_indices = np.split(indices, [int(vr*len(indices))])
-
-    if validation_data is not None:
-        test_labels = validation_data[label_headers].copy()
-        test_features = validation_data[feature_headers].copy()
-        test_indices = validation_data[indexarray].copy()
-
-
     models_list = []
 
     for model_type in models:
@@ -225,19 +219,39 @@ if __name__ == "__main__":
                 sub_model_type = sub_model_type.lstrip()
                 sub_model_type = sub_model_type.rstrip()
                 if sub_model_type in configs.keys():
-                    sub_model = build_model(sub_model_type, type, configs[sub_model_type], feature_headers, label_headers)
-                    if sub_model:
-                        sub_models_list.append(sub_model)
+                    if (sub_model_type == 'Lasso' or sub_model_type == 'PLS') and type == 'classifier':
+                        print('No classification for Lasso or PLS')
+                    else:
+                        sub_model = build_model(sub_model_type, type, configs[sub_model_type], feature_headers, label_headers)
+                        if sub_model:
+                            sub_models_list.append(sub_model)
                 else:
                     print('No valid configurations for sub model ', model_type)
             models_list.append(sub_models_list)
         else:
             if model_type in configs.keys():
-                model = build_model(model_type, type, configs[model_type], feature_headers, label_headers)
-                if model:
-                    models_list.append(model)
+                if (model_type == 'Lasso' or model_type == 'PLS') and type == 'classifier':
+                    print('No classification for Lasso or PLS')
+                else:
+                    model = build_model(model_type, type, configs[model_type], feature_headers, label_headers)
+                    if model:
+                        models_list.append(model)
             else:
                 print('No valid configurations for model ', model_type)
+
+
+
+
+
+    train_features, test_features = np.split(features, [int(vr*len(features))])
+    train_labels, test_labels = np.split(labels, [int(vr*len(labels))])
+    train_indices, test_indices = np.split(indices, [int(vr*len(indices))])
+
+    if validation_data is not None:
+        test_labels = validation_data[label_headers].copy()
+        test_features = validation_data[feature_headers].copy()
+        test_indices = validation_data[indexarray].copy()
+
 
     results = []
     modelindex = 0
