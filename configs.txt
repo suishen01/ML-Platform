@@ -3,17 +3,25 @@
     {
     'alpha': 1
     },
+  'Lasso':
+    {
+    'alpha': 1
+    },
+  'ElasticNet':
+    {
+    'l1_ratio': 1
+    },
   'DecisionTree':
     {
-    'max_depth': 50
+    'max_depth': -1
     },
   'AdaBoost':
     {
-    'n_estimators': 200
+    'n_estimators': 50
     },
   'GradientBoost':
     {
-    'n_estimators': 200
+    'n_estimators': 50
     },
   'RandomForest':
     {
@@ -26,8 +34,8 @@
     },
   'NeuralNetwork':
     {
-    'epochs': 1000,
-    'batch_size': 200
+    'epochs': 300,
+    'batch_size': 50
     },
   'ConvolutionalNeuralNetwork':
     {
@@ -47,6 +55,10 @@
     },
   'PCA':
     {
-    'n_components':2
+    'n_components':10
+    },
+  'PLS':
+    {
+    'n_components':10
     }
 }
