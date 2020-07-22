@@ -91,6 +91,11 @@ Similar to the input.txt/output.txt, this file has the header of a column in the
 A model needs to be validated to avoid overfitting. The users are welcomed to provide their own validation dataset (this dataset is required to have the same format and columns as the training dataset). If there is no validation dataset, the training dataset will be splited automatically by 7(for training):3(for validating).
 
 
+### -kfold 5 (optional)
+
+K-fold validation can be enabled by adding this argument. Note the number after -kfold must be an integer > 1.
+
+
 ### other arguments
 
 -t (required)
