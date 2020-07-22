@@ -40,6 +40,9 @@ Currently, we support the following models.
 | ConvolutionalNeuralNetwork |
 | LSTM |
 | PCA |
+| PLS |
+| Lasso |
+| Elasticnet |
 
 (Note: PCA is a dimension reduction technique, it needs to combine with the other models. An example to use PCA and Ridge is [PCA, Ridge] )
 
@@ -83,7 +86,7 @@ Currently we have the following reports:
 Similar to the input.txt/output.txt, this file has the header of a column in the training dataset. However, this file identifies the index column, which is only needed when you are making a plot for regression. The index will become the x-axis labels for the plotting. An example is provided in indexarray.txt.
 
 
-### -val validationdata.txt (optional)
+### -test test_data.txt (optional)
 
 A model needs to be validated to avoid overfitting. The users are welcomed to provide their own validation dataset (this dataset is required to have the same format and columns as the training dataset). If there is no validation dataset, the training dataset will be splited automatically by 7(for training):3(for validating).
 
@@ -94,9 +97,9 @@ A model needs to be validated to avoid overfitting. The users are welcomed to pr
 
 The inference type, r for regression and c for classification
 
--vr (optional)
+-tr (optional)
 
-validation ratio, default is 0.7, representing a 7:3 split.
+test ratio, default is 0.7, representing a 7:3 split for train/test.
 
 -hmr (optional)
 
