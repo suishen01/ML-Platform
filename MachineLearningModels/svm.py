@@ -60,13 +60,14 @@ class KernelSVM(Model):
 #        feature_importance = set(feature_importance_)
         return 'No feature importance for kernel svm'
 
-    def getAccuracy(self, test_labels, predictions):
-        df = pd.DataFrame(data=predictions.flatten())
+    def getAccuracy(self, test_labels, predictions, origin=0, hitmissr=0.8):
         correct = 0
+        df = pd.DataFrame(data=predictions.flatten())
+        test_labels = self.map_str_to_number(test_labels.copy())
         for i in range(len(df)):
             if (df.values[i] == test_labels.values[i]):
                 correct = correct + 1
-        return correct/len(df)
+        return float(correct)/len(df)
 
     def getConfusionMatrix(self, test_labels, predictions, label_headers):
         df = pd.DataFrame(data=predictions.flatten())

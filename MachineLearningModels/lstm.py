@@ -150,18 +150,21 @@ class LSTMModel(Model):
             index += 1
         return Y.map(mapping_dict)
 
-    def getAccuracy(self, test_labels, predictions):
-        df = pd.DataFrame(data=predictions.flatten())
-        test_labels = test_labels[(self.lookback+1):]
-
+    def getAccuracy(self, test_labels, predictions, origin=0, hitmissr=0.8):
         if self.type == 'classifier':
+            correct = 0
+            df = pd.DataFrame(data=predictions.flatten())
             test_labels = self.map_str_to_number(test_labels.copy())
-
-        correct = 0
-        for i in range(len(df)):
-            if (df.values[i] == test_labels.values[i]):
-                correct = correct + 1
-        return correct/len(df)
+            for i in range(len(df)):
+                if (df.values[i] == test_labels.values[i]):
+                    correct = correct + 1
+        else:
+            correct = 0
+            df = pd.DataFrame(data=predictions.flatten())
+            for i in range(len(df)):
+                if 1 - abs(df.values[i] - test_labels.values[i])/abs(df.values[i]) >= hitmissr:
+                    correct = correct + 1
+        return float(correct)/len(df)
 
     def getConfusionMatrix(self, test_labels, predictions, label_headers):
         df = pd.DataFrame(data=predictions.flatten())
@@ -179,7 +182,7 @@ class LSTMModel(Model):
             return 'No Confusion Matrix for Regression'
 
     def featureImportance(self):
-        return 'No feature importance for LSTM'
+        return ''
 
     def getRSquare(self, test_labels, predictions, mode='single'):
         df = pd.DataFrame(data=predictions.flatten())

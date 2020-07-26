@@ -190,7 +190,7 @@ class NeuralNetwork(Model):
             return 'No Confusion Matrix for Regression'
 
     def featureImportance(self):
-        return 'No feature importance for NN'
+        return ''
 
     def getRSquare(self, test_labels, predictions, mode='single'):
         df = pd.DataFrame(data=predictions.flatten())
