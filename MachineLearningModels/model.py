@@ -70,6 +70,7 @@ class Model:
         return ax
 
     def map_str_to_number(self, Y):
+        mapping_flag = False
         Y_new = Y.copy()
         if self.mapping_dict is not None:
             for label_header in self.label_headers:
