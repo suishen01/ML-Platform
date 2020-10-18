@@ -55,10 +55,10 @@ class ConvolutionalNeuralNetwork(Model):
         return data
 
     def init_model(self):
-        model.add(Conv2D(64, kernel_size=3, activation='relu', input_shape=(self.height,self.weight,self.dimension)))
-        model.add(Conv2D(32, kernel_size=3, activation='relu'))
-        model.add(Flatten())
-        model.add(Dense(self.classes, activation='softmax'))
+        self.model.add(Conv2D(64, kernel_size=3, activation='relu', input_shape=(self.height,self.weight,self.dimension)))
+        self.model.add(Conv2D(32, kernel_size=3, activation='relu'))
+        self.model.add(Flatten())
+        self.model.add(Dense(self.classes, activation='softmax'))
         self.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
     def summary(self):
