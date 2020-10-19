@@ -215,9 +215,12 @@ if __name__ == "__main__":
         test_features = test_data[feature_headers].copy()
         test_indices = test_data[indexarray].copy()
     else:
-        train_data, test_features = np.split(data, [int(vr*len(data))])
-        train_features = train_data
-        test_indices = test_features[indexarray].copy()
+        train_data, test_data = np.split(data, [int(vr*len(data))])
+        train_features = train_data[feature_headers].copy()
+        train_labels = train_data[label_headers].copy()
+        test_labels = test_data[label_headers].copy()
+        test_features = test_data[feature_headers].copy()
+        test_indices = test_data[indexarray].copy()
 
     if args.kfold > 1:
         shuffled = train_data.sample(frac=1)
