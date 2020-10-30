@@ -102,6 +102,7 @@ class NeuralNetwork(Model):
         return r2s
 
     def map_str_to_number(self, Y):
+        mapping_flag = False
         if self.mapping_dict is not None:
             for label_header in self.label_headers:
                 Y[label_header] = Y[label_header].map(self.mapping_dict)
