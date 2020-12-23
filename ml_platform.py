@@ -250,7 +250,6 @@ if __name__ == "__main__":
 
         train_features, tmp_test_features = np.split(features, [int(0.7*len(features))])
         train_labels, tmp_test_labels = np.split(labels, [int(0.7*len(labels))])
-        train_indices, tmp_test_indices = np.split(indices, [int(0.7*len(indices))])
 
         models_list = []
 
@@ -286,7 +285,7 @@ if __name__ == "__main__":
 
         results = []
         modelindex = 0
-        index = tmp_test_indices.copy()
+        
         kwargs = {'origin':args.origin, 'hitmissr':args.hitmissratio}
         for model in models_list:
             if isinstance(model, list):
@@ -310,7 +309,8 @@ if __name__ == "__main__":
                     final_model_list[modelindex] = model
             modelindex = modelindex + 1
 
-
+    import copy
+    report_indices = copy.deepcopy(test_indices)
     modelindex = 0
     for model in final_model_list:
         if isinstance(model, list):
@@ -320,11 +320,11 @@ if __name__ == "__main__":
             first_test_features = model[0].fit(test_features, None)
             predictions = model[1].predict(first_test_features)
             figpath = figurepath + '_' + str(modelindex) + '.png'
-            resultdf = produce_report(model[1], reports, test_labels, predictions, feature_headers, label_headers, test_indices, figpath, args.origin, args.hitmissratio)
+            resultdf = produce_report(model[1], reports, test_labels, predictions, feature_headers, label_headers, report_indices, figpath, args.origin, args.hitmissratio)
             resultdf.to_csv(resultpath + '_' + str(modelindex) + '.csv', index=False)
             predictions = pd.DataFrame(data=predictions.flatten())
             test_labels = test_labels.reset_index(drop=True)
-            tmp_df = pd.concat([index, predictions, test_labels], axis=1)
+            tmp_df = pd.concat([test_indices, predictions, test_labels], axis=1)
             tmp_df = tmp_df.rename(columns={0:'predictions', label_headers[0]:'actual'})
             tmp_df.to_csv(predictionpath + '_' + str(modelindex) + '.csv', index=False)
         else:
@@ -333,12 +333,12 @@ if __name__ == "__main__":
             model.save()
             predictions = model.predict(test_features)
             figpath = figurepath + '_' + str(modelindex) + '.png'
-            resultdf = produce_report(model, reports, test_labels, predictions, feature_headers, label_headers, test_indices, figpath)
+            resultdf = produce_report(model, reports, test_labels, predictions, feature_headers, label_headers, report_indices, figpath)
             resultdf.to_csv(resultpath + '_' + str(modelindex) + '.csv', index=False)
             predictions = pd.DataFrame(data=predictions.flatten())
             index = index.reset_index(drop=True)
             test_labels = test_labels.reset_index(drop=True)
-            tmp_df = pd.concat([index, predictions, test_labels], axis=1)
+            tmp_df = pd.concat([test_indices, predictions, test_labels], axis=1)
             tmp_df = tmp_df.rename(columns={0:'predictions', label_headers[0]:'actual'})
             tmp_df.to_csv(predictionpath + '_' + str(modelindex) + '.csv', index=False)
         modelindex = modelindex + 1
