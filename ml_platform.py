@@ -336,7 +336,6 @@ if __name__ == "__main__":
             resultdf = produce_report(model, reports, test_labels, predictions, feature_headers, label_headers, report_indices, figpath)
             resultdf.to_csv(resultpath + '_' + str(modelindex) + '.csv', index=False)
             predictions = pd.DataFrame(data=predictions.flatten())
-            index = index.reset_index(drop=True)
             test_labels = test_labels.reset_index(drop=True)
             tmp_df = pd.concat([test_indices, predictions, test_labels], axis=1)
             tmp_df = tmp_df.rename(columns={0:'predictions', label_headers[0]:'actual'})
