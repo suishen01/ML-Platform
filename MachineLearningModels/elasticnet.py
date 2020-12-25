@@ -66,32 +66,32 @@ class ElasticNet(Model):
         return self.model.coef_
 
     def map_str_to_number(self, Y):
-    mapping_flag = False
-    if self.mapping_dict is not None:
+        mapping_flag = False
+        if self.mapping_dict is not None:
+            for label_header in self.label_headers:
+                Y[label_header] = Y[label_header].map(self.mapping_dict)
+            return Y
+
+        mapping_dict = None
         for label_header in self.label_headers:
-            Y[label_header] = Y[label_header].map(self.mapping_dict)
+            check_list = pd.Series(Y[label_header])
+            for item in check_list:
+                if type(item) == str:
+                    mapping_flag = True
+                    break
+            if mapping_flag:
+                classes = Y[label_header].unique()
+                mapping_dict = {}
+                index = 0
+                for c in classes:
+                    mapping_dict[c] = index
+                    index += 1
+
+                Y[label_header] = Y[label_header].map(mapping_dict)
+                mapping_flag = False
+
+        self.mapping_dict = mapping_dict
         return Y
-
-    mapping_dict = None
-    for label_header in self.label_headers:
-        check_list = pd.Series(Y[label_header])
-        for item in check_list:
-            if type(item) == str:
-                mapping_flag = True
-                break
-        if mapping_flag:
-            classes = Y[label_header].unique()
-            mapping_dict = {}
-            index = 0
-            for c in classes:
-                mapping_dict[c] = index
-                index += 1
-
-            Y[label_header] = Y[label_header].map(mapping_dict)
-            mapping_flag = False
-
-    self.mapping_dict = mapping_dict
-    return Y
 
     def map_number_to_str(self, Y, classes):
         Y = Y.round()
@@ -110,16 +110,51 @@ class ElasticNet(Model):
    
     
     def getAccuracy(self, test_labels, predictions, origin=0, hitmissr=0.8):
-        correct = 0
-        df = pd.DataFrame(data=predictions.flatten())
-        for i in range(len(df)):
-            if 1 - abs(df.values[i] - test_labels.values[i])/abs(df.values[i]) >= hitmissr:
-                correct = correct + 1
+        if self.type == 'classifier':
+            correct = 0
+            df = pd.DataFrame(data=predictions.flatten())
+            test_labels = self.map_str_to_number(test_labels.copy())
+            for i in range(len(df)):
+                if (df.values[i] == test_labels.values[i]):
+                    correct = correct + 1
+        else:
+            correct = 0
+            df = pd.DataFrame(data=predictions.flatten())
+            for i in range(len(df)):
+                if 1 - abs(df.values[i] - test_labels.values[i])/abs(df.values[i]) >= hitmissr:
+                    correct = correct + 1
         return float(correct)/len(df)
 
     def getConfusionMatrix(self, test_labels, predictions, label_headers):
-        return 'No Confusion Matrix for Regression'
+        df = pd.DataFrame(data=predictions.flatten())
+        if self.type == 'classifier':
+            index = 0
+            for label_header in label_headers:
+                classes = test_labels[label_header].unique()
+                df_tmp = self.map_number_to_str(df.ix[:,index], classes)
+                title = 'Normalized confusion matrix for NeuralNetwork (' + label_header + ')'
+                self.plot_confusion_matrix(test_labels.ix[:,index], df_tmp, classes=classes, normalize=True,
+                          title=title)
+                index = index + 1
+        else:
+            return 'No Confusion Matrix for Regression'
 
+    def getROC(self, test_labels, predictions, label_headers):
+        predictions=pd.DataFrame(data=predictions.flatten())
+        predictions.columns=test_labels.columns.values
+        if self.type == 'classifier':
+            test_labels = self.map_str_to_number(test_labels)
+            fpr, tpr, _ = roc_curve(test_labels, predictions)
+            plt.figure(1)
+            plt.plot([0, 1], [0, 1], 'k--')
+            plt.plot(fpr, tpr)
+            plt.xlabel('False positive rate')
+            plt.ylabel('True positive rate')
+            plt.title('ROC curve')
+            plt.show()
+        else:
+            return 'No Confusion Matrix for Regression'
+        
     def getRSquare(self, test_labels, predictions, mode='single'):
         df = pd.DataFrame(data=predictions.flatten())
         if self.type == 'regressor':
