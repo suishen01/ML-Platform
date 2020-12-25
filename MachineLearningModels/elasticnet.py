@@ -40,6 +40,9 @@ class ElasticNet(Model):
         if Y is not None:
             self.Y = Y
 
+        if self.type == 'classifier':
+            self.Y = self.map_str_to_number(self.Y)
+            
         print('ElasticNet Train started............')
         self.model.fit(self.X, self.Y)
         print('ElasticNet completed..........')
@@ -49,6 +52,8 @@ class ElasticNet(Model):
     def predict(self, test_features):
         print('Prediction started............')
         self.predictions = self.model.predict(test_features)
+        if self.type == 'classifier':
+            predictions = predictions.round()
         print('Prediction completed..........')
         return self.predictions
 
@@ -60,6 +65,50 @@ class ElasticNet(Model):
 
         return self.model.coef_
 
+    def map_str_to_number(self, Y):
+    mapping_flag = False
+    if self.mapping_dict is not None:
+        for label_header in self.label_headers:
+            Y[label_header] = Y[label_header].map(self.mapping_dict)
+        return Y
+
+    mapping_dict = None
+    for label_header in self.label_headers:
+        check_list = pd.Series(Y[label_header])
+        for item in check_list:
+            if type(item) == str:
+                mapping_flag = True
+                break
+        if mapping_flag:
+            classes = Y[label_header].unique()
+            mapping_dict = {}
+            index = 0
+            for c in classes:
+                mapping_dict[c] = index
+                index += 1
+
+            Y[label_header] = Y[label_header].map(mapping_dict)
+            mapping_flag = False
+
+    self.mapping_dict = mapping_dict
+    return Y
+
+    def map_number_to_str(self, Y, classes):
+        Y = Y.round()
+        Y = Y.astype(int)
+        if self.mapping_dict is not None:
+            mapping_dict = self.mapping_dict
+        else:
+            mapping_dict = {}
+            index = 0
+            for c in classes:
+                mapping_dict[index] = c
+                index += 1
+
+        inv_map = {v: k for k, v in mapping_dict.items()}
+        return Y.map(inv_map)
+   
+    
     def getAccuracy(self, test_labels, predictions, origin=0, hitmissr=0.8):
         correct = 0
         df = pd.DataFrame(data=predictions.flatten())
