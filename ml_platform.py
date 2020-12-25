@@ -263,8 +263,8 @@ if __name__ == "__main__":
                     sub_model_type = sub_model_type.lstrip()
                     sub_model_type = sub_model_type.rstrip()
                     if sub_model_type in configs.keys():
-                        if (sub_model_type == 'Lasso' or sub_model_type == 'PLS' or sub_model_type == 'ElasticNet' or model_type == 'KernelSVM') and type == 'classifier':
-                            print('No classification for Lasso, PLS, ElasticNet, KernelSVM')
+                        if (sub_model_type == 'PLS' and type == 'classifier') or (model_type == 'KernelSVM' and type == 'regressor'):
+                            print('No classification for PLS, no regression for KernelSVM')
                         else:
                             sub_model = build_model(sub_model_type, type, configs[sub_model_type], feature_headers, label_headers)
                             if sub_model:
@@ -274,8 +274,8 @@ if __name__ == "__main__":
                 models_list.append(sub_models_list)
             else:
                 if model_type in configs.keys():
-                    if (model_type == 'Lasso' or model_type == 'PLS' or model_type == 'ElasticNet' or model_type == 'KernelSVM') and type == 'classifier':
-                        print('No classification for Lasso, PLS, ElasticNet, KernelSVM')
+                    if (model_type == 'PLS' and type == 'classifier') or (model_type == 'KernelSVM' and type == 'regressor'):
+                        print('No classification for PLS, no regression for KernelSVM')
                     else:
                         model = build_model(model_type, type, configs[model_type], feature_headers, label_headers)
                         if model:
