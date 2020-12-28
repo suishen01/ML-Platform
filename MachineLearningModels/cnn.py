@@ -10,6 +10,7 @@ import tensorflow as tf
 from sklearn.metrics import r2_score, mean_squared_error
 from math import sqrt
 import numpy as np
+from keras.utils import to_categorical
 
 
 
@@ -27,7 +28,7 @@ class ConvolutionalNeuralNetwork(Model):
     def __init__(self):
         Model.__init__(self)
 
-    def __init__(self, height, width, dimension, classes, epochs=150, batch_size=50, X=None, Y=None):
+    def __init__(self, height, width, dimension, classes, label_headers, epochs=150, batch_size=50, X=None, Y=None):
         if X is not None:
             self.X = X
 
@@ -35,6 +36,9 @@ class ConvolutionalNeuralNetwork(Model):
             self.Y = Y
 
         self.Y_str2num = None
+        self.label_headers = label_headers
+
+        self.mapping_dict = None
 
         self.type = 'classifier'
 
@@ -51,14 +55,14 @@ class ConvolutionalNeuralNetwork(Model):
         self.init_model()
 
     def datareshape(self, data):
-        data = data.reshape(len(data),self.height,self.weight,self.dimension)
+        data = data.reshape(len(data),self.height,self.width,self.dimension)
         return data
 
     def init_model(self):
-        self.model.add(Conv2D(64, kernel_size=3, activation='relu', input_shape=(self.height,self.weight,self.dimension)))
+        self.model.add(Conv2D(64, kernel_size=3, activation='relu', input_shape=(self.height,self.width,self.dimension)))
         self.model.add(Conv2D(32, kernel_size=3, activation='relu'))
         self.model.add(Flatten())
-        self.model.add(Dense(self.classes, activation='softmax'))
+        self.model.add(Dense(self.classes, activation='linear'))
         self.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
     def summary(self):
@@ -72,10 +76,10 @@ class ConvolutionalNeuralNetwork(Model):
             self.Y = Y.copy()
 
         self.X = self.datareshape(self.X)
-        self.Y = self.map_str_to_number(self.Y)
+        self.Y = to_categorical(self.Y, num_classes=self.classes)
 
         print('Convolutional Neural Network Train started............')
-        self.model.fit(self.X.values, self.Y.values, epochs=self.epochs, batch_size=self.batch_size, verbose=0, validation_split=0.2)
+        self.model.fit(self.X, self.Y, epochs=self.epochs, batch_size=self.batch_size, verbose=0, validation_split=0.2)
         print('Convolutional Neural Network Train completed..........')
 
         return self.model
@@ -85,92 +89,14 @@ class ConvolutionalNeuralNetwork(Model):
 
     def predict(self, test_X):
         test_X = self.datareshape(test_X)
-        predictions = self.model.predict(test_X.values)
+        predictions = self.model.predict(test_X)
         predictions = predictions.round()
         return predictions[:,0]
 
     def score(self, test_X, test_Y):
-        y_pred = self.predict(test_X)
-        r2s = r2_score(test_Y, y_pred, multioutput='variance_weighted')
-        return r2s
-
-    def map_str_to_number(self, Y):
-        if self.mapping_dict is not None:
-            for label_header in self.label_headers:
-                Y[label_header] = Y[label_header].map(self.mapping_dict)
-            return Y
-
-        mapping_dict = None
-        for label_header in self.label_headers:
-            check_list = pd.Series(Y[label_header])
-            for item in check_list:
-                if type(item) == str:
-                    mapping_flag = True
-                    break
-            if mapping_flag:
-                classes = Y[label_header].unique()
-                mapping_dict = {}
-                index = 0
-                for c in classes:
-                    mapping_dict[c] = index
-                    index += 1
-
-                Y[label_header] = Y[label_header].map(mapping_dict)
-                mapping_flag = False
-
-        self.mapping_dict = mapping_dict
-        return Y
-
-    def map_number_to_str(self, Y, classes):
-        if self.mapping_dict is not None:
-            mapping_dict = self.mapping_dict
-        else:
-            Y = Y.round()
-            mapping_dict = {}
-            index = 0
-            for c in classes:
-                mapping_dict[index] = c
-                index += 1
-        return Y.map(mapping_dict)
-
-    def getAccuracy(self, test_labels, predictions):
-        df = pd.DataFrame(data=predictions.flatten())
-        test_labels = self.map_str_to_number(test_labels.copy())
-
-        correct = 0
-        for i in range(len(df)):
-            if (df.values[i] == test_labels.values[i]):
-                correct = correct + 1
-        return correct/len(df)
-
-    def getConfusionMatrix(self, test_labels, predictions, label_headers):
-        df = pd.DataFrame(data=predictions.flatten())
-        if self.type == 'classifier':
-            index = 0
-            for label_header in label_headers:
-                classes = test_labels[label_header].unique()
-                df_tmp = self.map_number_to_str(df.ix[:,index], classes)
-                title = 'Normalized confusion matrix for ConvolutionalNeuralNetwork (' + label_header + ')'
-                self.plot_confusion_matrix(test_labels.ix[:,index], df_tmp, classes=classes, normalize=True,
-                          title=title)
-                index = index + 1
-        else:
-            return 'No Confusion Matrix for Regression'
-
-    def featureImportance(self):
-        return 'No feature importance for CNN'
-
-    def getRSquare(self, test_labels, predictions, mode='single'):
-        return 'No RSquare for Classification'
-
-    def getMSE(self, test_labels, predictions):
-        return 'No MSE for Classification'
-
-    def getMAPE(self, test_labels, predictions):
-        return 'No MAPE for Classification'
-
-    def getRMSE(self, test_labels, predictions):
-        return 'No RMSE for Classification'
+        test_Y = to_categorical(test_Y, num_classes=self.classes)
+        score = self.model.evaluate(test_X, test_Y, batch_size=32)
+        return score
 
     def load(self, path, type):
         self.model = load_model(path)
