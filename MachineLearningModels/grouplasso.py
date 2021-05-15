@@ -1,5 +1,5 @@
 from MachineLearningModels.model import Model
-from sklearn.linear_model import Lasso as LassoRegression
+from group_lasso import GroupLasso
 import pandas as pd
 import pickle
 from sklearn.metrics import r2_score, mean_squared_error
@@ -7,7 +7,7 @@ from math import sqrt
 import numpy as np
 import json
 
-class Lasso(Model):
+class GLasso(Model):
 
     # X represents the features, Y represents the labels
     X = None
@@ -17,7 +17,7 @@ class Lasso(Model):
 
 
 
-    def __init__(self, X=None, Y=None, label_headers=None,  alpha=1, type='regressor', cfg=False):
+    def __init__(self, X=None, Y=None, feature_headers=None, label_headers=None,  groups=None, type='regressor', cfg=False):
 
         if X is not None:
             self.X = X
@@ -30,8 +30,13 @@ class Lasso(Model):
 
         self.mapping_dict = None
         self.label_headers = label_headers
+        self.no_inputs = len(feature_headers)
 
-        self.model = LassoRegression(alpha=alpha)
+        if groups is None:
+            groups = [1 for i in range(self.no_inputs)]
+        else:
+            groups = groups
+        self.model = GroupLasso(groups=groups,supress_warning=True)
 
 
     def fit(self, X=None, Y=None):
@@ -44,9 +49,9 @@ class Lasso(Model):
         if self.type == 'classifier':
             self.Y = self.map_str_to_number(self.Y)
 
-        print('Lasso Train started............')
+        print('Group Lasso Train started............')
         self.model.fit(self.X, self.Y)
-        print('Lasso completed..........')
+        print('Group Lasso completed..........')
 
         return self.model
 
@@ -61,10 +66,10 @@ class Lasso(Model):
 
     def save(self):
         if self.cfg:
-            f = open('lasso_configs.txt', 'w')
+            f = open('grouplasso_configs.txt', 'w')
             f.write(json.dumps(self.model.get_params()))
             f.close()
-        print('No models will be saved for lasso')
+        print('No models will be saved for Group lasso')
 
     def featureImportance(self):
         return self.model.coef_
@@ -136,7 +141,7 @@ class Lasso(Model):
             for label_header in label_headers:
                 classes = test_labels[label_header].unique()
                 df_tmp = self.map_number_to_str(df.ix[:,index], classes)
-                title = 'Normalized confusion matrix for Lasso (' + label_header + ')'
+                title = 'Normalized confusion matrix for Group Lasso (' + label_header + ')'
                 self.plot_confusion_matrix(test_labels.ix[:,index], df_tmp, classes=classes, normalize=True,
                           title=title)
                 index = index + 1

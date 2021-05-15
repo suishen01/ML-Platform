@@ -4,18 +4,18 @@ A platform integrated with Keras, sklearn, and many data process/result evaluati
 This framework consists three parts, data preprocessor, model generator and single prediction tester
 
 ## Data Precessor
-Currently, we only provides data cleaner, which can replace 'NaN' values in your dataset based on your strategy. 
+Currently, we only provides data cleaner, which can replace 'NaN' values in your dataset based on your strategy.
 There are three strategies,
 
 - ignore: remove all the rows containing 'NaN' data
 - mean_col
 - mean_row
-- 
+-
 
-An example to call this tool is 
+An example to call this tool is
 python3 data_clean.py -train data.csv -s ignore -o new_data.csv
 
-Where, 
+Where,
 data.csv is the file contains your original data
 ignore is the strategy
 new_data.csv is the new file which will store your cleaned data
@@ -141,3 +141,7 @@ nn_model.h5 is the model's location
 prediction.csv is the output path
 
 c is prediction type, c for classification and r for regression
+
+
+## External Packages
+pip install group-lasso (for group lasso)

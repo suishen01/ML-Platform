@@ -7,7 +7,7 @@ from math import sqrt
 import numpy as np
 import json
 
-class Lasso(Model):
+class AdaptiveLasso(Model):
 
     # X represents the features, Y represents the labels
     X = None
@@ -17,7 +17,7 @@ class Lasso(Model):
 
 
 
-    def __init__(self, X=None, Y=None, label_headers=None,  alpha=1, type='regressor', cfg=False):
+    def __init__(self, X=None, Y=None, label_headers=None,  alpha=1, n_itr=5, type='regressor', cfg=False):
 
         if X is not None:
             self.X = X
@@ -27,7 +27,8 @@ class Lasso(Model):
 
         self.type = type
         self.cfg = cfg
-
+        self.alpha = alpha
+        self.n_itr = n_itr
         self.mapping_dict = None
         self.label_headers = label_headers
 
@@ -44,9 +45,30 @@ class Lasso(Model):
         if self.type == 'classifier':
             self.Y = self.map_str_to_number(self.Y)
 
-        print('Lasso Train started............')
-        self.model.fit(self.X, self.Y)
-        print('Lasso completed..........')
+        g = lambda w: np.sqrt(np.abs(w))
+        gprime = lambda w: 1. / (2. * np.sqrt(np.abs(w)) + np.finfo(float).eps)
+
+        n_samples, n_features = self.X.shape
+        p_obj = lambda w: 1. / (2 * n_samples) * np.sum((self.Y - np.dot(self.X, w)) ** 2) \
+                          + alpha * np.sum(g(w))
+
+        weights = np.ones(n_features)
+
+        X_w = self.X / weights[np.newaxis, :]
+
+        adaptive_lasso = LassoRegression(alpha=self.alpha, fit_intercept=False)
+
+        adaptive_lasso.fit(X_w, self.Y)
+        n_lasso_iterations = self.n_itr
+        print('Adaptive Lasso Train started............')
+        for k in range(n_lasso_iterations):
+            X_w = self.X / weights[np.newaxis, :]
+            adaptive_lasso = LassoRegression(alpha=self.alpha, fit_intercept=False)
+            adaptive_lasso.fit(X_w, self.Y)
+            coef_ = adaptive_lasso.coef_ / weights
+            weights = gprime(coef_)
+        self.model = adaptive_lasso
+        print('Adaptive Lasso completed..........')
 
         return self.model
 
@@ -61,10 +83,10 @@ class Lasso(Model):
 
     def save(self):
         if self.cfg:
-            f = open('lasso_configs.txt', 'w')
+            f = open('adaptivelasso_configs.txt', 'w')
             f.write(json.dumps(self.model.get_params()))
             f.close()
-        print('No models will be saved for lasso')
+        print('No models will be saved for Adaptive lasso')
 
     def featureImportance(self):
         return self.model.coef_
@@ -136,7 +158,7 @@ class Lasso(Model):
             for label_header in label_headers:
                 classes = test_labels[label_header].unique()
                 df_tmp = self.map_number_to_str(df.ix[:,index], classes)
-                title = 'Normalized confusion matrix for Lasso (' + label_header + ')'
+                title = 'Normalized confusion matrix for Adaptive Lasso (' + label_header + ')'
                 self.plot_confusion_matrix(test_labels.ix[:,index], df_tmp, classes=classes, normalize=True,
                           title=title)
                 index = index + 1

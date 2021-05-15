@@ -14,8 +14,10 @@ from MachineLearningModels.cnn import ConvolutionalNeuralNetwork
 from MachineLearningModels.lstm import LSTMModel
 from MachineLearningModels.pca import PCA
 from MachineLearningModels.lasso import Lasso
+from MachineLearningModels.adaptivelasso import AdaptiveLasso
 from MachineLearningModels.pls import PLS
 from MachineLearningModels.elasticnet import ElasticNet
+from MachineLearningModels.grouplasso import GLasso
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -75,6 +77,10 @@ def build_model(model_type, prediction_type, configs, feature_headers, label_hea
         model = PLS(n_components=configs['n_components'], type=prediction_type, cfg=args.cfg)
     elif model_type == 'Lasso':
         model = Lasso(label_headers=label_headers, alpha=configs['alpha'], type=prediction_type, cfg=args.cfg)
+    elif model_type == 'AdaptiveLasso':
+        model = AdaptiveLasso(label_headers=label_headers, alpha=configs['alpha'], n_itr=configs['n_itr'], type=prediction_type, cfg=args.cfg)
+    elif model_type == 'GroupLasso':
+        model = GLasso(feature_headers=feature_headers, label_headers=label_headers, groups=configs['groups'], type=prediction_type, cfg=args.cfg)
     elif model_type == 'ElasticNet':
         model = ElasticNet(label_headers=label_headers, l1_ratio=configs['l1_ratio'], type=prediction_type, cfg=args.cfg)
     else:
@@ -306,17 +312,15 @@ if __name__ == "__main__":
                 first_test_features = model[0].fit(tmp_test_features, None)
                 predictions = model[1].predict(first_test_features)
                 tmp_accuracy = model[1].getAccuracy(tmp_test_labels, predictions, {k: v for k, v in kwargs.items() if v is not None})
-                if tmp_accuracy >= final_score_list[modelindex]:
-                    final_score_list[modelindex] = tmp_accuracy
-                    final_model_list[modelindex] = model
+                final_score_list[modelindex] = tmp_accuracy
+                final_model_list[modelindex] = model
             else:
                 dict = {}
                 model.fit(train_features, train_labels)
                 predictions = model.predict(tmp_test_features)
                 tmp_accuracy = model.getAccuracy(tmp_test_labels, predictions, {k: v for k, v in kwargs.items() if v is not None})
-                if tmp_accuracy >= final_score_list[modelindex]:
-                    final_score_list[modelindex] = tmp_accuracy
-                    final_model_list[modelindex] = model
+                final_score_list[modelindex] = tmp_accuracy
+                final_model_list[modelindex] = model
     modelindex = modelindex + 1
 
     for model in models_list:
