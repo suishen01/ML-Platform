@@ -152,7 +152,6 @@ if __name__ == "__main__":
     data = alldata
     #data = data.sample(frac=1).reset_index(drop=True)
     if args.expandingwindow:
-        print('----------------------------------')
         vr = (len(data)-52)/len(data)
     else:
         vr = args.testratio
