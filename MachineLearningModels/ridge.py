@@ -6,6 +6,7 @@ import pickle
 from sklearn.metrics import r2_score, mean_squared_error
 from math import sqrt
 import numpy as np
+import json
 
 class Ridge(Model):
 
@@ -18,7 +19,7 @@ class Ridge(Model):
     def __init__(self):
         pass
 
-    def __init__(self, X=None, Y=None, label_headers=None,  alpha=1, type='regressor'):
+    def __init__(self, X=None, Y=None, label_headers=None,  alpha=1, type='regressor', cfg=False):
 
         if X is not None:
             self.X = X
@@ -27,6 +28,7 @@ class Ridge(Model):
             self.Y = Y
 
         self.type = type
+        self.cfg = cfg
 
         self.mapping_dict = None
         self.label_headers = label_headers
@@ -61,6 +63,10 @@ class Ridge(Model):
         return self.predictions
 
     def save(self, filename='ridge_model.pkl'):
+        if self.cfg:
+            f = open('ridge_configs.txt', 'w')
+            f.write(json.dumps(self.model.get_params()))
+            f.close()
         pickle.dump(self.model, open(filename, 'wb'))
 
     def featureImportance(self):

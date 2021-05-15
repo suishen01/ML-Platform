@@ -1,5 +1,6 @@
 from MachineLearningModels.model import Model
 from sklearn.linear_model import LogisticRegression as LogisticRegressionModel
+import json
 
 class LogisticRegression(Model):
 
@@ -10,7 +11,7 @@ class LogisticRegression(Model):
     model = None
 
 
-    def __init__(self, X=None, Y=None):
+    def __init__(self, X=None, Y=None, cfg=False):
 
         if X is not None:
             self.X = X
@@ -19,6 +20,7 @@ class LogisticRegression(Model):
             self.Y = Y
 
         self.model = LogisticRegressionModel()
+        self.cfg = cfg
 
 
     def fit(self, X=None, Y=None):
@@ -42,6 +44,10 @@ class LogisticRegression(Model):
 
 
     def save(self):
+        if self.cfg:
+            f = open('logisticregression_configs.txt', 'w')
+            f.write(json.dumps(self.model.get_params()))
+            f.close()
         print('No models will be saved for Logistic Regression')
 
     def featureImportance(self):

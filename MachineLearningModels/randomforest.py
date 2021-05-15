@@ -6,6 +6,7 @@ import pickle
 from sklearn.metrics import r2_score, mean_squared_error
 from math import sqrt
 import numpy as np
+import json
 
 class RandomForest(Model):
 
@@ -18,7 +19,7 @@ class RandomForest(Model):
     def __init__(self):
         pass
 
-    def __init__(self, X=None, Y=None, label_headers=None,  n_estimators=100, type='regressor'):
+    def __init__(self, X=None, Y=None, label_headers=None,  n_estimators=100, type='regressor', cfg=False):
         if X is not None:
             self.X = X
 
@@ -26,6 +27,7 @@ class RandomForest(Model):
             self.Y = Y
 
         self.type = type
+        self.cfg = cfg
 
         self.mapping_dict = None
         self.label_headers = label_headers
@@ -58,6 +60,10 @@ class RandomForest(Model):
         return self.predictions
 
     def save(self, filename='randomforest_model.pkl'):
+        if self.cfg:
+            f = open('randomforest_configs.txt', 'w')
+            f.write(json.dumps(self.model.get_params()))
+            f.close()
         pickle.dump(self.model, open(filename, 'wb'))
 
     def featureImportance(self):

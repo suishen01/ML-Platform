@@ -28,7 +28,7 @@ class ConvolutionalNeuralNetwork(Model):
     def __init__(self):
         Model.__init__(self)
 
-    def __init__(self, height, width, dimension, classes, label_headers, epochs=150, batch_size=50, X=None, Y=None):
+    def __init__(self, height, width, dimension, classes, label_headers, epochs=150, batch_size=50, X=None, Y=None, cfg=False):
         if X is not None:
             self.X = X
 
@@ -41,6 +41,7 @@ class ConvolutionalNeuralNetwork(Model):
         self.mapping_dict = None
 
         self.type = 'classifier'
+        self.cfg = cfg
 
         self.height = height
         self.width = width
@@ -85,6 +86,9 @@ class ConvolutionalNeuralNetwork(Model):
         return self.model
 
     def save(self, filename='cnn_model.h5'):
+        if self.cfg:
+            with open('cnn_configs.txt', 'w') as f:
+                self.model.summary(print_fn=lambda x: f.write(x + '\n'))
         self.model.save(filename)
 
     def predict(self, test_X):

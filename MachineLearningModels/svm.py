@@ -5,6 +5,7 @@ import pickle
 from sklearn.metrics import r2_score, mean_squared_error
 from math import sqrt
 import numpy as np
+import json
 
 class KernelSVM(Model):
 
@@ -17,7 +18,7 @@ class KernelSVM(Model):
     def __init__(self):
         pass
 
-    def __init__(self, X=None, Y=None, kernel='poly', degree=8):
+    def __init__(self, X=None, Y=None, kernel='poly', degree=8, cfg=False):
 
         if X is not None:
             self.X = X
@@ -26,6 +27,7 @@ class KernelSVM(Model):
             self.Y = Y
 
         self.type = 'classifier'
+        self.cfg = cfg
         self.model = SVC(kernel=kernel, degree=degree)
 
 
@@ -49,6 +51,10 @@ class KernelSVM(Model):
         return self.predictions
 
     def save(self, filename='kernelsvm_model.pkl'):
+        if self.cfg:
+            f = open('svm_configs.txt', 'w')
+            f.write(json.dumps(self.model.get_params()))
+            f.close()
         pickle.dump(self.model, open(filename, 'wb'))
 
     def featureImportance(self):

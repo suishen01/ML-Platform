@@ -1,5 +1,6 @@
 from MachineLearningModels.model import Model
 from sklearn.linear_model import LinearRegression as LinearRegressionModel
+import json
 
 class LinearRegression(Model):
 
@@ -10,7 +11,7 @@ class LinearRegression(Model):
     model = None
 
 
-    def __init__(self, X=None, Y=None):
+    def __init__(self, X=None, Y=None, cfg=False):
 
         if X is not None:
             self.X = X
@@ -19,6 +20,7 @@ class LinearRegression(Model):
             self.Y = Y
 
         self.model = LinearRegressionModel()
+        self.cfg = cfg
 
 
     def fit(self, X=None, Y=None):
@@ -42,6 +44,10 @@ class LinearRegression(Model):
 
 
     def save(self):
+        if self.cfg:
+            f = open('linearregression_configs.txt', 'w')
+            f.write(json.dumps(self.model.get_params()))
+            f.close()
         print('No models will be saved for lasso')
 
     def featureImportance(self):

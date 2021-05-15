@@ -35,11 +35,13 @@ def init_arg_parser():
     parser.add_argument('-fp', '--figurepath', help="Figures path", required=False)
     parser.add_argument('-tr', '--testratio',type=float, default=0.7, help='Test Ratio (default: 0.7)',required=False)
     parser.add_argument('-test', '--test', help='Validation dataset',required=False)
+    parser.add_argument('-ew', '--expandingwindow', default=False, action="store_true", help='Expanding window split',required=False)
     parser.add_argument('-c','--config', help='Configuration file',required=False)
     parser.add_argument('-m','--models', help='Involved ML models', required=False)
     parser.add_argument('-r','--reports', help='Produced results', required=False)
     parser.add_argument('-origin','--origin', help='For classification accuracy', required=False)
     parser.add_argument('-hmr','--hitmissratio', help='For classification accuracy', required=False)
+    parser.add_argument('-cfg', '--cfg', default=False, action="store_true", help='Save detailed configurations')
     return parser
 
 def read_dict(path):
@@ -48,33 +50,33 @@ def read_dict(path):
 def read_list(path):
     return open(path, 'r').read().splitlines()
 
-def build_model(model_type, prediction_type, configs, feature_headers, label_headers):
+def build_model(model_type, prediction_type, configs, feature_headers, label_headers, pca=None):
     if model_type == 'Ridge':
-        model = Ridge(label_headers=label_headers, alpha=configs['alpha'], type=prediction_type)
+        model = Ridge(label_headers=label_headers, alpha=configs['alpha'], type=prediction_type, cfg=args.cfg)
     elif model_type == 'DecisionTree':
-        model = DecisionTree(label_headers=label_headers, max_depth=configs['max_depth'], type=prediction_type)
+        model = DecisionTree(label_headers=label_headers, max_depth=configs['max_depth'], type=prediction_type, cfg=args.cfg)
     elif model_type == 'AdaBoost':
-        model = AdaBoost(label_headers=label_headers, n_estimators=configs['n_estimators'], type=prediction_type)
+        model = AdaBoost(label_headers=label_headers, n_estimators=configs['n_estimators'], type=prediction_type, cfg=args.cfg)
     elif model_type == 'GradientBoost':
-        model = GradientBoost(label_headers=label_headers, n_estimators=configs['n_estimators'], type=prediction_type)
+        model = GradientBoost(label_headers=label_headers, n_estimators=configs['n_estimators'], type=prediction_type, cfg=args.cfg)
     elif model_type == 'RandomForest':
-        model = RandomForest(label_headers=label_headers, n_estimators=configs['n_estimators'], type=prediction_type)
+        model = RandomForest(label_headers=label_headers, n_estimators=configs['n_estimators'], type=prediction_type, cfg=args.cfg)
     elif model_type == 'KernelSVM':
-        model = KernelSVM(kernel=configs['kernel'], degree=configs['degree'])
+        model = KernelSVM(kernel=configs['kernel'], degree=configs['degree'], cfg=args.cfg)
     elif model_type == 'NeuralNetwork':
-        model = NeuralNetwork(feature_headers, label_headers, epochs=configs['epochs'], batch_size=configs['batch_size'], type=prediction_type)
+        model = NeuralNetwork(feature_headers, label_headers, epochs=configs['epochs'], batch_size=configs['batch_size'], type=prediction_type, cfg=args.cfg, pca=pca)
     elif model_type == 'ConvolutionalNeuralNetwork':
-        model = ConvolutionalNeuralNetwork(height=configs['height'], width=configs['width'], dimension=configs['dimension'], classes=configs['classes'], epochs=configs['epochs'], batch_size=configs['batch_size'])
+        model = ConvolutionalNeuralNetwork(height=configs['height'], width=configs['width'], dimension=configs['dimension'], classes=configs['classes'], epochs=configs['epochs'], batch_size=configs['batch_size'], cfg=args.cfg)
     elif model_type == 'LSTM':
-        model = LSTMModel(feature_headers, label_headers, epochs=configs['epochs'], batch_size=configs['batch_size'], type=prediction_type, lookback=configs['lookback'], num_of_cells=configs['num_of_cells'])
+        model = LSTMModel(feature_headers, label_headers, epochs=configs['epochs'], batch_size=configs['batch_size'], type=prediction_type, lookback=configs['lookback'], num_of_cells=configs['num_of_cells'], cfg=args.cfg, pca=pca)
     elif model_type == 'PCA':
-        model = PCA(n_components=configs['n_components'], type=prediction_type)
+        model = PCA(n_components=configs['n_components'], type=prediction_type, cfg=args.cfg)
     elif model_type == 'PLS':
-        model = PLS(n_components=configs['n_components'], type=prediction_type)
+        model = PLS(n_components=configs['n_components'], type=prediction_type, cfg=args.cfg)
     elif model_type == 'Lasso':
-        model = Lasso(label_headers=label_headers, alpha=configs['alpha'], type=prediction_type)
+        model = Lasso(label_headers=label_headers, alpha=configs['alpha'], type=prediction_type, cfg=args.cfg)
     elif model_type == 'ElasticNet':
-        model = ElasticNet(label_headers=label_headers, l1_ratio=configs['l1_ratio'], type=prediction_type)
+        model = ElasticNet(label_headers=label_headers, l1_ratio=configs['l1_ratio'], type=prediction_type, cfg=args.cfg)
     else:
         print(model_type, ' is not implemented yet')
         model = None
@@ -149,11 +151,11 @@ if __name__ == "__main__":
     alldata = alldata.fillna(0)
     data = alldata
     #data = data.sample(frac=1).reset_index(drop=True)
-
-    if args.testratio:
-        vr = args.testratio
+    if args.expandingwindow:
+        print('----------------------------------')
+        vr = (len(data)-52)/len(data)
     else:
-        vr = 0.7
+        vr = args.testratio
 
     if args.test:
         test_data = csvreader.read(args.test)
@@ -225,8 +227,11 @@ if __name__ == "__main__":
     if args.kfold > 1:
         shuffled = train_data.sample(frac=1)
         kfolddata = np.array_split(shuffled, args.kfold)
+        shuffled = test_data.sample(frac=1)
+        kfolddata_val = np.array_split(shuffled, args.kfold)
     else:
         kfolddata = [train_data]
+        kfolddata_val = [test_data]
 
     final_model_list = []
     final_score_list = []
@@ -238,7 +243,10 @@ if __name__ == "__main__":
 
     counter = 0
 
+    models_list = []
+    modelindex = 0
     for folddata in kfolddata:
+        folddata_val = kfolddata_val[counter]
         counter = counter + 1
 
         if args.kfold > 1:
@@ -248,10 +256,13 @@ if __name__ == "__main__":
         labels = folddata[label_headers].copy()
         features = folddata[feature_headers].copy()
 
-        train_features, tmp_test_features = np.split(features, [int(0.7*len(features))])
-        train_labels, tmp_test_labels = np.split(labels, [int(0.7*len(labels))])
+        labels_val = folddata_val[label_headers].copy()
+        features_val = folddata_val[feature_headers].copy()
 
-        models_list = []
+        train_features = features
+        tmp_test_features = features_val
+        train_labels = labels
+        tmp_test_labels = labels_val
 
         for model_type in models:
             if '[' in model_type:
@@ -266,7 +277,10 @@ if __name__ == "__main__":
                         if (sub_model_type == 'PLS' and type == 'classifier') or (model_type == 'KernelSVM' and type == 'regressor'):
                             print('No classification for PLS, no regression for KernelSVM')
                         else:
-                            sub_model = build_model(sub_model_type, type, configs[sub_model_type], feature_headers, label_headers)
+                            if sub_model_type == 'NeuralNetwork' or sub_model_type == 'LSTM':
+                                sub_model = build_model(sub_model_type, type, configs[sub_model_type], feature_headers, label_headers, pca=configs[sub_models[0]])
+                            else:
+                                sub_model = build_model(sub_model_type, type, configs[sub_model_type], feature_headers, label_headers)
                             if sub_model:
                                 sub_models_list.append(sub_model)
                     else:
@@ -284,14 +298,12 @@ if __name__ == "__main__":
                     print('No valid configurations for model ', model_type)
 
         results = []
-        modelindex = 0
-        
+
         kwargs = {'origin':args.origin, 'hitmissr':args.hitmissratio}
         for model in models_list:
             if isinstance(model, list):
                 first_train_features = model[0].fit(train_features, train_labels)
                 model[1].fit(first_train_features, train_labels)
-                model[1].save()
                 first_test_features = model[0].fit(tmp_test_features, None)
                 predictions = model[1].predict(first_test_features)
                 tmp_accuracy = model[1].getAccuracy(tmp_test_labels, predictions, {k: v for k, v in kwargs.items() if v is not None})
@@ -301,13 +313,20 @@ if __name__ == "__main__":
             else:
                 dict = {}
                 model.fit(train_features, train_labels)
-                model.save()
                 predictions = model.predict(tmp_test_features)
                 tmp_accuracy = model.getAccuracy(tmp_test_labels, predictions, {k: v for k, v in kwargs.items() if v is not None})
                 if tmp_accuracy >= final_score_list[modelindex]:
                     final_score_list[modelindex] = tmp_accuracy
                     final_model_list[modelindex] = model
-            modelindex = modelindex + 1
+    modelindex = modelindex + 1
+
+    for model in models_list:
+        if isinstance(model, list):
+            model[0].save()
+            model[1].save()
+        else:
+            model.save()
+
 
     import copy
     report_indices = copy.deepcopy(test_indices)
@@ -324,8 +343,9 @@ if __name__ == "__main__":
             resultdf.to_csv(resultpath + '_' + str(modelindex) + '.csv', index=False)
             predictions = pd.DataFrame(data=predictions.flatten())
             test_labels = test_labels.reset_index(drop=True)
-            tmp_df = pd.concat([test_indices, predictions, test_labels], axis=1)
-            tmp_df = tmp_df.rename(columns={0:'predictions', label_headers[0]:'actual'})
+            test_indices = test_indices.reset_index(drop=True)
+            tmp_df = pd.concat([test_indices, predictions, test_labels], axis=1, ignore_index=True)
+            tmp_df = tmp_df.rename(columns={0:indexarrays[0], 1:'predictions',2:'actual'})
             tmp_df.to_csv(predictionpath + '_' + str(modelindex) + '.csv', index=False)
         else:
             dict = {}
@@ -337,7 +357,8 @@ if __name__ == "__main__":
             resultdf.to_csv(resultpath + '_' + str(modelindex) + '.csv', index=False)
             predictions = pd.DataFrame(data=predictions.flatten())
             test_labels = test_labels.reset_index(drop=True)
-            tmp_df = pd.concat([test_indices, predictions, test_labels], axis=1)
-            tmp_df = tmp_df.rename(columns={0:'predictions', label_headers[0]:'actual'})
+            test_indices = test_indices.reset_index(drop=True)
+            tmp_df = pd.concat([test_indices, predictions, test_labels], axis=1, ignore_index=True)
+            tmp_df = tmp_df.rename(columns={0:indexarrays[0], 1:'predictions',2:'actual'})
             tmp_df.to_csv(predictionpath + '_' + str(modelindex) + '.csv', index=False)
         modelindex = modelindex + 1

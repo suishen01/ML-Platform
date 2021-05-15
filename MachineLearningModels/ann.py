@@ -33,7 +33,7 @@ class NeuralNetwork(Model):
     def __init__(self):
         Model.__init__(self)
 
-    def __init__(self, feature_headers, label_headers, type='regressor', epochs=150, batch_size=50, X=None, Y=None):
+    def __init__(self, feature_headers, label_headers, type='regressor', epochs=150, batch_size=50, X=None, Y=None, cfg=False, pca=None):
         if X is not None:
             self.X = X
 
@@ -43,7 +43,10 @@ class NeuralNetwork(Model):
         self.feature_headers = feature_headers
         self.label_headers = label_headers
 
-        self.no_inputs = len(feature_headers)
+        if pca is not None:
+            self.no_inputs = pca['n_components']
+        else:
+            self.no_inputs = len(feature_headers)
         self.no_outputs = len(label_headers)
 
         self.epochs = epochs
@@ -52,6 +55,7 @@ class NeuralNetwork(Model):
         self.mapping_dict = None
 
         self.type = type
+        self.cfg = cfg
         self.model = Sequential()
         self.init_model()
 
@@ -88,6 +92,9 @@ class NeuralNetwork(Model):
         return self.model
 
     def save(self, filename='nn_model_test.h5'):
+        if self.cfg:
+            with open('ann_configs.txt', 'w') as f:
+                self.model.summary(print_fn=lambda x: f.write(x + '\n'))
         self.model.save(filename)
 
     def predict(self, test_X):

@@ -5,6 +5,7 @@ import pickle
 from sklearn.metrics import r2_score, mean_squared_error
 from math import sqrt
 import numpy as np
+import json
 
 class Lasso(Model):
 
@@ -16,7 +17,7 @@ class Lasso(Model):
 
 
 
-    def __init__(self, X=None, Y=None, label_headers=None,  alpha=1, type='regressor'):
+    def __init__(self, X=None, Y=None, label_headers=None,  alpha=1, type='regressor', cfg=False):
 
         if X is not None:
             self.X = X
@@ -25,6 +26,7 @@ class Lasso(Model):
             self.Y = Y
 
         self.type = type
+        self.cfg = cfg
 
         self.mapping_dict = None
         self.label_headers = label_headers
@@ -58,6 +60,10 @@ class Lasso(Model):
 
 
     def save(self):
+        if self.cfg:
+            f = open('lasso_configs.txt', 'w')
+            f.write(json.dumps(self.model.get_params()))
+            f.close()
         print('No models will be saved for lasso')
 
     def featureImportance(self):
@@ -105,8 +111,8 @@ class Lasso(Model):
 
         inv_map = {v: k for k, v in mapping_dict.items()}
         return Y.map(inv_map)
-   
-    
+
+
     def getAccuracy(self, test_labels, predictions, origin=0, hitmissr=0.8):
         if self.type == 'classifier':
             correct = 0

@@ -4,6 +4,7 @@ import pandas as pd
 from sklearn.metrics import r2_score, mean_squared_error
 from math import sqrt
 import numpy as np
+import json
 
 class PLS(Model):
 
@@ -14,7 +15,7 @@ class PLS(Model):
     model = None
 
 
-    def __init__(self, X=None, Y=None,  n_components=2, type='regressor'):
+    def __init__(self, X=None, Y=None,  n_components=2, type='regressor', cfg=False):
         self.name = 'PLS'
 
         if X is not None:
@@ -24,6 +25,7 @@ class PLS(Model):
             self.Y = Y
 
         self.type = type
+        self.cfg = cfg
         self.n_components = n_components
         self.model = PLSRegression(n_components=n_components)
 
@@ -64,6 +66,10 @@ class PLS(Model):
 
 
     def save(self):
+        if self.cfg:
+            f = open('pls_configs.txt', 'w')
+            f.write(json.dumps(self.model.get_params()))
+            f.close()
         print('No models will be saved for PLS')
 
     def featureImportance(self):

@@ -6,6 +6,7 @@ import pickle
 from sklearn.metrics import r2_score, mean_squared_error
 from math import sqrt
 import numpy as np
+import json
 
 class PCA(Model):
 
@@ -20,7 +21,7 @@ class PCA(Model):
     def __init__(self):
         pass
 
-    def __init__(self, X=None, Y=None,  n_components=2, type='regressor'):
+    def __init__(self, X=None, Y=None,  n_components=2, type='regressor', cfg=False):
         self.name = 'PCA'
 
         if X is not None:
@@ -30,6 +31,7 @@ class PCA(Model):
             self.Y = Y
 
         self.type = type
+        self.cfg = cfg
         self.n_components = n_components
         self.model = PCAmodel(n_components=n_components)
 
@@ -60,6 +62,10 @@ class PCA(Model):
         return self.predictions
 
     def save(self, filename='pcaridge_model.pkl'):
+        if self.cfg:
+            f = open('pca_configs.txt', 'w')
+            f.write(json.dumps(self.model.get_params()))
+            f.close()
         pickle.dump(self.ridge_model, open(filename, 'wb'))
 
     def featureImportance(self):

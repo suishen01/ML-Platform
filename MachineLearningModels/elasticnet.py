@@ -5,6 +5,7 @@ import pickle
 from sklearn.metrics import r2_score, mean_squared_error
 from math import sqrt
 import numpy as np
+import json
 
 class ElasticNet(Model):
 
@@ -17,7 +18,7 @@ class ElasticNet(Model):
     def __init__(self):
         pass
 
-    def __init__(self, X=None, Y=None, label_headers=None,  l1_ratio=1, type='regressor'):
+    def __init__(self, X=None, Y=None, label_headers=None,  l1_ratio=1, type='regressor', cfg=False):
 
         if X is not None:
             self.X = X
@@ -26,6 +27,7 @@ class ElasticNet(Model):
             self.Y = Y
 
         self.type = type
+        self.cfg = cfg
 
         self.mapping_dict = None
         self.label_headers = label_headers
@@ -42,7 +44,7 @@ class ElasticNet(Model):
 
         if self.type == 'classifier':
             self.Y = self.map_str_to_number(self.Y)
-            
+
         print('ElasticNet Train started............')
         self.model.fit(self.X, self.Y)
         print('ElasticNet completed..........')
@@ -59,6 +61,10 @@ class ElasticNet(Model):
 
 
     def save(self):
+        if self.cfg:
+            f = open('elasticnet_configs.txt', 'w')
+            f.write(json.dumps(self.model.get_params()))
+            f.close()
         print('No models will be saved for elasticnet')
 
     def featureImportance(self):
@@ -107,8 +113,8 @@ class ElasticNet(Model):
 
         inv_map = {v: k for k, v in mapping_dict.items()}
         return Y.map(inv_map)
-   
-    
+
+
     def getAccuracy(self, test_labels, predictions, origin=0, hitmissr=0.8):
         if self.type == 'classifier':
             correct = 0
@@ -154,7 +160,7 @@ class ElasticNet(Model):
             plt.show()
         else:
             return 'No Confusion Matrix for Regression'
-        
+
     def getRSquare(self, test_labels, predictions, mode='single'):
         df = pd.DataFrame(data=predictions.flatten())
         if self.type == 'regressor':

@@ -6,6 +6,7 @@ from sklearn.metrics import r2_score, mean_squared_error
 from math import sqrt
 import numpy as np
 import matplotlib.pyplot as plt
+import json
 
 class DecisionTree(Model):
 
@@ -18,7 +19,7 @@ class DecisionTree(Model):
     def __init__(self):
         pass
 
-    def __init__(self, X=None, Y=None, label_headers=None, max_depth=None, type='regressor'):
+    def __init__(self, X=None, Y=None, label_headers=None, max_depth=None, type='regressor', cfg=False):
         if X is not None:
             self.X = X
 
@@ -28,6 +29,7 @@ class DecisionTree(Model):
         self.mapping_dict = None
         self.label_headers = label_headers
         self.type = type
+        self.cfg = cfg
         if max_depth == -1:
             max_depth = None
 
@@ -59,6 +61,10 @@ class DecisionTree(Model):
         return self.predictions
 
     def save(self, filename='decisiontree_model.pkl'):
+        if self.cfg:
+            f = open('decisiontree_configs.txt', 'w')
+            f.write(json.dumps(self.model.get_params()))
+            f.close()
         pickle.dump(self.model, open(filename, 'wb'))
 
     def featureImportance(self):

@@ -3,4 +3,4 @@ AdaBoost
 GradientBoost
 RandomForest
 NeuralNetwork
-PCA+Ridge
+[PCA,Ridge]
